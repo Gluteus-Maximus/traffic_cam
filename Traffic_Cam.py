@@ -10,7 +10,8 @@ def parse_netdev(interface):
     be gathered.
   '''
   netdev = Path('/proc/net/dev')
-  trafficRaw = netdev.read_text()
+  trafficRaw = netdev.read_text().split()
+  print("\n", trafficRaw, "\n")  #TODO:DBG
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([
       ('rx_bytes', trafficRaw[idxZero + 1]),
