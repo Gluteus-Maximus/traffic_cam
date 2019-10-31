@@ -17,11 +17,11 @@ def parse_netdev(interface):
   #print("\n", trafficRaw, "\n")  #TODO:DBG
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
-      ('timestamp', time.time()),
-      ('rx_bytes', trafficRaw[idxZero + 1]),
-      ('rx_pkts', trafficRaw[idxZero + 2]),
-      ('tx_bytes', trafficRaw[idxZero + 9]),
-      ('tx_pkts', trafficRaw[idxZero + 10])
+      ('ts', time.time()),                # Timestamp
+      ('rx_b', trafficRaw[idxZero + 1]),  # Receive Bytes
+      ('rx_p', trafficRaw[idxZero + 2]),  # Receive Packets
+      ('tx_b', trafficRaw[idxZero + 9]),  # Transmit Bytes
+      ('tx_p', trafficRaw[idxZero + 10])  # Transmit Packets
       ])
   return traffic
 
@@ -61,7 +61,20 @@ def generate_splunk_panel():
   pass
 
 
-def generate_history():
+def load_netdev(filepath, startTS, endTS):
+  '''
+  @func: Creates iterable of netdev values.
+  '''
+  trafficLst = list()
+  with Path(filepath) as fp:
+    for line in fp.read_text():
+      traffic = json.dumps(line)
+      if traffic['ts'] >= startTS and traffic['ts'] <= endTS:
+        history.append(traffic)
+  pass
+
+
+def generate_history(trafficLst):
   '''
   @func: Creates iterable of history objects.
   '''
