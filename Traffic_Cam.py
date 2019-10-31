@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#from argparse import
 from pathlib import Path
 import json
 import time
@@ -66,7 +67,7 @@ def load_netdev(filepath, startTS=None, endTS=None):
   '''
   trafficLst = list()
   with Path(filepath) as fp:
-    for line in list(filter(None, fp.read_text().split("\n"))):
+    for line in [x for x in fp.read_text().split("\n") if x]:
       traffic = json.loads(line)
       if (startTS is None or traffic['ts'] >= startTS) \
           and (endTS is None or traffic['ts'] <= endTS):
@@ -76,7 +77,8 @@ def load_netdev(filepath, startTS=None, endTS=None):
 
 def generate_history(trafficLst):
   '''
-  @func: Creates iterable of history objects.
+  @func: Creates iterable of history objects containing the difference in
+    bytes and packets from the previous datum.
   '''
   pass
 
