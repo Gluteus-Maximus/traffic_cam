@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import sys
 #from argparse import
 from pathlib import Path
 import json
@@ -18,10 +19,10 @@ def parse_netdev(interface):
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
       ('ts', time.time()),                # Timestamp
-      ('rx_b', trafficRaw[idxZero + 1]),  # Receive Bytes
-      ('rx_p', trafficRaw[idxZero + 2]),  # Receive Packets
-      ('tx_b', trafficRaw[idxZero + 9]),  # Transmit Bytes
-      ('tx_p', trafficRaw[idxZero + 10])  # Transmit Packets
+      ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
+      ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
+      ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
+      ('tx_p', int(trafficRaw[idxZero + 10]))  # Transmit Packets
       ])
   return traffic
 
@@ -51,6 +52,7 @@ def create_chronjob():
   '''
   @func: Creates a chron job to automatically collect data.
   '''
+  #TODO: allow separate files per day/hours etc
   pass
 
 
@@ -65,13 +67,16 @@ def load_netdev(filepath, startTS=None, endTS=None):
   '''
   @func: Creates iterable of netdev values.
   '''
+  #TODO: handle multiple files
   trafficLst = list()
   with Path(filepath) as fp:
     for line in [x for x in fp.read_text().split("\n") if x]:
       traffic = json.loads(line)
+      #TODO: json.decoder.JSONDecodeError
       if (startTS is None or traffic['ts'] >= startTS) \
           and (endTS is None or traffic['ts'] <= endTS):
         trafficLst.append(traffic)
+        #TODO: skip bad entries (key/value checks)
   return trafficLst
 
 
@@ -80,38 +85,62 @@ def generate_history(trafficLst):
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
   '''
-  pass
+  if len(trafficLst) < 2:
+    print("ERROR: Not enough data to generate history", file=sys.stderr)
+    return None
+
+  # Sort trafficLst by timestamp
+  trafficLst = sorted([t for t in trafficLst if 'ts' in t.keys()], key = lambda x: x['ts'])
+  #TODO: remove list comprehension ^ -- try/except return None
+  historyLst = list()
+  prevObj = trafficLst[0]
+  for traffic in trafficLst[1:]:
+    nextObj = traffic
+    try:
+      historyObj = dict([
+        ('startTS', prevObj['ts']),  # Start Timestamp
+        ('endTS', nextObj['ts']),  # End Timestamp
+        ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # Diff Receive Bytes
+        ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # Diff Receive Packets
+        ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # Diff Transmit Bytes
+        ('tx_p', nextObj['tx_p'] - prevObj['tx_p']),  # Diff Transmit Packets
+        ])
+      historyLst.append(historyObj)
+    except KeyError:
+      print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
+    prevObj = traffic
+  return historyLst
 
 
-def output_history():
+def output_history(historyLst, mode):
   '''
   @func: Wrapper function for various output options.
   '''
   pass
 
 
-def display_graph():
+def display_graph(historyLst):
   '''
   @func: CLI display history as a graph.
   '''
   pass
 
 
-def display_table():
+def display_table(historyLst):
   '''
   @func: CLI display history as a table.
   '''
   pass
 
 
-def display_raw():
+def display_raw(historyLst):
   '''
   @func: CLI display history as raw data.
   '''
   pass
 
 
-def save_history():
+def save_history(historyLst):
   '''
   @func: Output history to a json file.
   '''
