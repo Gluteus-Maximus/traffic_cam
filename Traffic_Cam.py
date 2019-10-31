@@ -82,17 +82,18 @@ def generate_history(trafficLst):
   '''
   if len(trafficLst) < 2:
     return None
+  #TODO: sort trafficLst by ts
   historyLst = list()
   prevObj = trafficLst[0]
   for traffic in trafficLst[1:]:
     nextObj = traffic
     historyObj = dict([
-      ('startTS', prevObj['ts']),  # 
-      ('endTS', nextObj['ts']),  # 
-      ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # 
-      ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # 
-      ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # 
-      ('tx_p', nextObj['tx_p'] - prevObj['tx_p']),  # 
+      ('startTS', prevObj['ts']),  # Start Timestamp
+      ('endTS', nextObj['ts']),  # End Timestamp
+      ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # Diff Receive Bytes
+      ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # Diff Receive Packets
+      ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # Diff Transmit Bytes
+      ('tx_p', nextObj['tx_p'] - prevObj['tx_p']),  # Diff Transmit Packets
       ])
     prevObj = traffic
   return historyLst
