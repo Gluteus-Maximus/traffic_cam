@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from pathlib import Path
+import time
 
 def parse_netdev(interface):
   '''
@@ -11,9 +12,10 @@ def parse_netdev(interface):
   '''
   netdev = Path('/proc/net/dev')
   trafficRaw = netdev.read_text().split()
-  print("\n", trafficRaw, "\n")  #TODO:DBG
+  #print("\n", trafficRaw, "\n")  #TODO:DBG
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([
+      ('timestamp', time.time()),
       ('rx_bytes', trafficRaw[idxZero + 1]),
       ('rx_pkts', trafficRaw[idxZero + 2]),
       ('tx_bytes', trafficRaw[idxZero + 9]),
