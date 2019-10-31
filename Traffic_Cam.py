@@ -18,7 +18,7 @@ def parse_netdev(interface):
   trafficRaw = netdev.read_text().split()
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
-      ('ts', time.time()),                # Timestamp
+      ('ts', time.time()),                     # Timestamp
       ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
       ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
       ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
@@ -98,8 +98,8 @@ def generate_history(trafficLst):
     nextObj = traffic
     try:
       historyObj = dict([
-        ('startTS', prevObj['ts']),  # Start Timestamp
-        ('endTS', nextObj['ts']),  # End Timestamp
+        ('startTS', prevObj['ts']),                   # Start Timestamp
+        ('endTS', nextObj['ts']),                     # End Timestamp
         ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # Diff Receive Bytes
         ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # Diff Receive Packets
         ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # Diff Transmit Bytes
@@ -112,36 +112,51 @@ def generate_history(trafficLst):
   return historyLst
 
 
-def output_history(historyLst, mode):
+def output_history(mode, historyLst, filepath=None):
   '''
   @func: Wrapper function for various output options.
   '''
+  #TODO: validation?
+  # Filepath validation for 'save' mode happens during arg parsing
+  #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
+  switch = {
+      'graph': display_graph,
+      'table': display_table,
+      'raw'  : display_raw,
+      'save' : save_history
+      }
+  return switch[mode](historyLst, filepath)
+    # 'filepath' is ignored where appropriate
   pass
 
 
-def display_graph(historyLst):
+def display_graph(historyLst, _):
   '''
   @func: CLI display history as a graph.
   '''
+  print("display_graph")  #TODO DBG
   pass
 
 
-def display_table(historyLst):
+def display_table(historyLst, _):
   '''
   @func: CLI display history as a table.
   '''
+  print("display_table")  #TODO DBG
   pass
 
 
-def display_raw(historyLst):
+def display_raw(historyLst, _):
   '''
   @func: CLI display history as raw data.
   '''
+  print("display_raw")  #TODO DBG
   pass
 
 
-def save_history(historyLst):
+def save_history(historyLst, filepath):
   '''
   @func: Output history to a json file.
   '''
+  print("save_history")  #TODO DBG
   pass
