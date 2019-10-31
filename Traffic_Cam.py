@@ -67,15 +67,17 @@ def load_netdev(filepath, startTS=None, endTS=None):
   '''
   trafficLst = list()
   with Path(filepath) as fp:
-    print(fp.read_text().split("\n"))  #TODO DBG
-    for line in fp.read_text().split("\n"):
-      print(line)  #TODO DBG
+    #print(fp.read_text().split("\n"))  #TODO DBG
+    for line in list(filter(None, fp.read_text().split("\n"))):
+      #print(line)  #TODO DBG
       traffic = json.loads(line)
-      print(type(traffic), "\n")  #TODO DBG
-      print(traffic, "\n")
+      #print(type(traffic), "\n")  #TODO DBG
+      #print(traffic, "\n")
       if (startTS is None or traffic['ts'] >= startTS) \
           and (endTS is None or traffic['ts'] <= endTS):
         trafficLst.append(traffic)
+  for item in trafficLst:  #TODO DBG
+    print(item)
   return trafficLst
 
 
