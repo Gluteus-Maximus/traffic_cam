@@ -87,13 +87,14 @@ def generate_history(trafficLst):
   for traffic in trafficLst[1:]:
     nextObj = traffic
     historyObj = dict([
-      ('ts', ),  # 
-      ('rx_b', ),  # 
-      ('rx_p', ),  # 
-      ('tx_b', ),  # 
-      ('tx_p', ),  # 
+      ('startTS', prevObj['ts']),  # 
+      ('endTS', nextObj['ts']),  # 
+      ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # 
+      ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # 
+      ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # 
+      ('tx_p', nextObj['tx_p'] - prevObj['tx_p']),  # 
       ])
-
+    prevObj = traffic
   return historyLst
 
 
