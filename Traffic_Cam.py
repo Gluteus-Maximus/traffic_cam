@@ -52,6 +52,7 @@ def create_chronjob():
   '''
   @func: Creates a chron job to automatically collect data.
   '''
+  #TODO: allow separate files per day/hours etc
   pass
 
 
@@ -66,6 +67,7 @@ def load_netdev(filepath, startTS=None, endTS=None):
   '''
   @func: Creates iterable of netdev values.
   '''
+  #TODO: handle multiple files
   trafficLst = list()
   with Path(filepath) as fp:
     for line in [x for x in fp.read_text().split("\n") if x]:
@@ -83,14 +85,13 @@ def generate_history(trafficLst):
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
   '''
-  print(trafficLst)  #TODO DBG
   if len(trafficLst) < 2:
     print("ERROR: Not enough data to generate history", file=sys.stderr)
     return None
+
   # Sort trafficLst by timestamp
   trafficLst = sorted([t for t in trafficLst if 'ts' in t.keys()], key = lambda x: x['ts'])
   #TODO: remove list comprehension ^ -- try/except return None
-  print(trafficLst)  #TODO DBG
   historyLst = list()
   prevObj = trafficLst[0]
   for traffic in trafficLst[1:]:
@@ -107,40 +108,39 @@ def generate_history(trafficLst):
       historyLst.append(historyObj)
     except KeyError:
       print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
-      pass  # Skip bad entries in trafficLst
     prevObj = traffic
   return historyLst
 
 
-def output_history():
+def output_history(historyLst, mode):
   '''
   @func: Wrapper function for various output options.
   '''
   pass
 
 
-def display_graph():
+def display_graph(historyLst):
   '''
   @func: CLI display history as a graph.
   '''
   pass
 
 
-def display_table():
+def display_table(historyLst):
   '''
   @func: CLI display history as a table.
   '''
   pass
 
 
-def display_raw():
+def display_raw(historyLst):
   '''
   @func: CLI display history as raw data.
   '''
   pass
 
 
-def save_history():
+def save_history(historyLst):
   '''
   @func: Output history to a json file.
   '''
