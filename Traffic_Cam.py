@@ -72,7 +72,7 @@ def load_netdev(filepath, startTS=None, endTS=None):
       if (startTS is None or traffic['ts'] >= startTS) \
           and (endTS is None or traffic['ts'] <= endTS):
         trafficLst.append(traffic)
-  return 0#trafficLst
+  return trafficLst
 
 
 def generate_history(trafficLst):
