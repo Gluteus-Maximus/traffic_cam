@@ -30,7 +30,12 @@ def store_netdev(traffic, filepath):
   @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
   @return: 0 for success, 1 for failure
   '''
-  pass
+  try:
+    with Path(filepath).open(mode='a') as fp:
+      fp.write(json.dumps(traffic) + "\n")
+    return 0
+  except Exception:  #TODO: specify
+    return 1
 
 
 def create_config():
