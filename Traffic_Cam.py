@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from pathlib import Path
+import json
 import time
 
 def parse_netdev(interface):
@@ -15,7 +16,7 @@ def parse_netdev(interface):
   trafficRaw = netdev.read_text().split()
   #print("\n", trafficRaw, "\n")  #TODO:DBG
   idxZero = trafficRaw.index(interface + ":")
-  traffic = dict([
+  traffic = dict([  #TODO: shrink names
       ('timestamp', time.time()),
       ('rx_bytes', trafficRaw[idxZero + 1]),
       ('rx_pkts', trafficRaw[idxZero + 2]),
@@ -34,7 +35,8 @@ def store_netdev(traffic, filepath):
     with Path(filepath).open(mode='a') as fp:
       fp.write(json.dumps(traffic) + "\n")
     return 0
-  except Exception:  #TODO: specify
+  except Exception as e:  #TODO: specify
+    print("SAVE ERROR: {}".format(e))
     return 1
 
 
