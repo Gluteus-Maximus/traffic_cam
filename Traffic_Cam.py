@@ -80,7 +80,21 @@ def generate_history(trafficLst):
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
   '''
-  pass
+  if len(trafficLst) < 2:
+    return None
+  historyLst = list()
+  prevObj = trafficLst[0]
+  for traffic in trafficLst[1:]:
+    nextObj = traffic
+    historyObj = dict([
+      ('ts', ),  # 
+      ('rx_b', ),  # 
+      ('rx_p', ),  # 
+      ('tx_b', ),  # 
+      ('tx_p', ),  # 
+      ])
+
+  return historyLst
 
 
 def output_history():
