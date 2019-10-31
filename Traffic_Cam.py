@@ -61,7 +61,7 @@ def generate_splunk_panel():
   pass
 
 
-def load_netdev(filepath, startTS, endTS):
+def load_netdev(filepath, startTS=None, endTS=None):
   '''
   @func: Creates iterable of netdev values.
   '''
@@ -69,9 +69,10 @@ def load_netdev(filepath, startTS, endTS):
   with Path(filepath) as fp:
     for line in fp.read_text():
       traffic = json.dumps(line)
-      if traffic['ts'] >= startTS and traffic['ts'] <= endTS:
+      if (startTS is None or traffic['ts'] >= startTS)
+          and (endTS is None or traffic['ts'] <= endTS):
         history.append(traffic)
-  pass
+  return trafficLst
 
 
 def generate_history(trafficLst):
