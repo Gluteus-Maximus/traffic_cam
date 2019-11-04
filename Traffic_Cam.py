@@ -161,3 +161,26 @@ def save_history(historyLst, filepath):
   '''
   for item in historyLst:
     store_netdev(item, filepath)
+
+
+def load_history(filepath, startTS=None, endTS=None):
+  '''
+  @func: Creates a history list from json history file.
+  @return: List of history dict's (equiv. to historyLst)
+  '''
+  #TODO: handle multiple files
+  #TODO: overload load_netdev??
+  try:
+    with Path(filepath) as fp:
+      historyLst = list()
+      for line in [x for x in fp.read_text().split("\n") if x]:
+        traffic = json.loads(line)
+        #TODO: json.decoder.JSONDecodeError
+        if (startTS is None or traffic['startTS'] >= startTS) \
+            and (endTS is None or traffic['endTS'] <= endTS):
+          historyLst.append(traffic)
+          #TODO: skip bad entries (key/value checks)
+      return historyLst
+  except Exception as e:  #TODO: target exceptions
+    print("ERROR: {}".format(e), file=sys.stderr)
+    return None
