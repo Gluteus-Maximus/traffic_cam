@@ -27,7 +27,7 @@ def parse_netdev(interface):
   return traffic
 
 
-def store_netdev(traffic, filepath):
+def store_netdev(traffic, filepath):  #TODO: rename to store_dict
   '''
   @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
   @return: 0 for success, 1 for failure
@@ -66,18 +66,23 @@ def generate_splunk_panel():
 def load_netdev(filepath, startTS=None, endTS=None):
   '''
   @func: Creates iterable of netdev values.
+  @return: List of traffic dict's
   '''
   #TODO: handle multiple files
   trafficLst = list()
-  with Path(filepath) as fp:
-    for line in [x for x in fp.read_text().split("\n") if x]:
-      traffic = json.loads(line)
-      #TODO: json.decoder.JSONDecodeError
-      if (startTS is None or traffic['ts'] >= startTS) \
-          and (endTS is None or traffic['ts'] <= endTS):
-        trafficLst.append(traffic)
-        #TODO: skip bad entries (key/value checks)
-  return trafficLst
+  try:
+    with Path(filepath) as fp:
+      for line in [x for x in fp.read_text().split("\n") if x]:
+        traffic = json.loads(line)
+        #TODO: json.decoder.JSONDecodeError
+        if (startTS is None or traffic['ts'] >= startTS) \
+            and (endTS is None or traffic['ts'] <= endTS):
+          trafficLst.append(traffic)
+          #TODO: skip bad entries (key/value checks) - try, continue
+    return trafficLst
+  except Exception as e:  #TODO: target exceptions
+    print("ERROR: {}".format(e), file=sys.stderr)
+    return None
 
 
 def generate_history(trafficLst):
