@@ -125,6 +125,7 @@ def output_history(mode, historyLst, filepath=None):
       'raw'  : display_raw,
       'save' : save_history
       }
+  # Call function from 'switch' according to 'mode'
   return switch[mode](historyLst, filepath)
     # 'filepath' is ignored where appropriate
   pass
@@ -150,8 +151,8 @@ def display_raw(historyLst, _):
   '''
   @func: CLI display history as raw data.
   '''
-  print("display_raw")  #TODO DBG
-  pass
+  for item in historyLst:
+    print(item)
 
 
 def save_history(historyLst, filepath):
