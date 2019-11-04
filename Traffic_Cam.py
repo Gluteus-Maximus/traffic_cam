@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import sys
 #from argparse import
 from pathlib import Path
 import json
@@ -17,11 +18,11 @@ def parse_netdev(interface):
   trafficRaw = netdev.read_text().split()
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
-      ('ts', time.time()),                # Timestamp
-      ('rx_b', trafficRaw[idxZero + 1]),  # Receive Bytes
-      ('rx_p', trafficRaw[idxZero + 2]),  # Receive Packets
-      ('tx_b', trafficRaw[idxZero + 9]),  # Transmit Bytes
-      ('tx_p', trafficRaw[idxZero + 10])  # Transmit Packets
+      ('ts', time.time()),                     # Timestamp
+      ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
+      ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
+      ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
+      ('tx_p', int(trafficRaw[idxZero + 10]))  # Transmit Packets
       ])
   return traffic
 
@@ -51,6 +52,7 @@ def create_chronjob():
   '''
   @func: Creates a chron job to automatically collect data.
   '''
+  #TODO: allow separate files per day/hours etc
   pass
 
 
@@ -65,13 +67,16 @@ def load_netdev(filepath, startTS=None, endTS=None):
   '''
   @func: Creates iterable of netdev values.
   '''
+  #TODO: handle multiple files
   trafficLst = list()
   with Path(filepath) as fp:
     for line in [x for x in fp.read_text().split("\n") if x]:
       traffic = json.loads(line)
+      #TODO: json.decoder.JSONDecodeError
       if (startTS is None or traffic['ts'] >= startTS) \
           and (endTS is None or traffic['ts'] <= endTS):
         trafficLst.append(traffic)
+        #TODO: skip bad entries (key/value checks)
   return trafficLst
 
 
@@ -80,39 +85,102 @@ def generate_history(trafficLst):
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
   '''
-  pass
+  if len(trafficLst) < 2:
+    print("ERROR: Not enough data to generate history", file=sys.stderr)
+    return None
+
+  # Sort trafficLst by timestamp
+  trafficLst = sorted([t for t in trafficLst if 'ts' in t.keys()], key = lambda x: x['ts'])
+  #TODO: remove list comprehension ^ -- try/except return None
+  historyLst = list()
+  prevObj = trafficLst[0]
+  for traffic in trafficLst[1:]:
+    nextObj = traffic
+    try:
+      historyObj = dict([
+        ('startTS', prevObj['ts']),                   # Start Timestamp
+        ('endTS', nextObj['ts']),                     # End Timestamp
+        ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # Diff Receive Bytes
+        ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # Diff Receive Packets
+        ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # Diff Transmit Bytes
+        ('tx_p', nextObj['tx_p'] - prevObj['tx_p']),  # Diff Transmit Packets
+        ])
+      historyLst.append(historyObj)
+    except KeyError:
+      print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
+    prevObj = traffic
+  return historyLst
 
 
-def output_history():
+def output_history(mode, historyLst, filepath=None):
   '''
   @func: Wrapper function for various output options.
   '''
+  #TODO: validation?
+  # Filepath validation for 'save' mode happens during arg parsing
+  #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
+  switch = {
+      'graph': display_graph,
+      'table': display_table,
+      'raw'  : display_raw,
+      'save' : save_history
+      }
+  # Call function from 'switch' according to 'mode'
+  return switch[mode](historyLst, filepath)
+    # 'filepath' is ignored where appropriate
   pass
 
 
-def display_graph():
+def display_graph(historyLst, _):
   '''
   @func: CLI display history as a graph.
   '''
+  print("display_graph")  #TODO DBG
   pass
 
 
-def display_table():
+def display_table(historyLst, _):
   '''
   @func: CLI display history as a table.
   '''
+  print("display_table")  #TODO DBG
   pass
 
 
-def display_raw():
+def display_raw(historyLst, _):
   '''
   @func: CLI display history as raw data.
   '''
-  pass
+  for item in historyLst:
+    print(item)
 
 
-def save_history():
+def save_history(historyLst, filepath):
   '''
-  @func: Output history to a json file.
+  @func: Output history to a json file. Overwrites file if exists.
   '''
-  pass
+  for item in historyLst:
+    store_netdev(item, filepath)
+
+
+def load_history(filepath, startTS=None, endTS=None):
+  '''
+  @func: Creates a history list from json history file.
+  @return: List of history dict's (equiv. to historyLst)
+  '''
+  #TODO: handle multiple files
+  #TODO: overload load_netdev??
+  try:
+    with Path(filepath) as fp:
+      historyLst = list()
+      for line in [x for x in fp.read_text().split("\n") if x]:
+        traffic = json.loads(line)
+        #TODO: json.decoder.JSONDecodeError
+        if (startTS is None or traffic['startTS'] >= startTS) \
+            and (endTS is None or traffic['endTS'] <= endTS):
+          historyLst.append(traffic)
+          #TODO: skip bad entries (key/value checks)
+      return historyLst
+  except Exception as e:  #TODO: target exceptions
+    print("ERROR: {}".format(e), file=sys.stderr)
+    return None
