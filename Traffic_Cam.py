@@ -157,7 +157,7 @@ def display_raw(historyLst, _):
 
 def save_history(historyLst, filepath):
   '''
-  @func: Output history to a json file.
+  @func: Output history to a json file. Overwrites file if exists.
   '''
-  print("save_history")  #TODO DBG
-  pass
+  for item in historyLst:
+    store_netdev(item, filepath)
