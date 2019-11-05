@@ -29,6 +29,8 @@ def getArgs(argv=sys.argv):
   config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int, help="")  # Frequency of logging
                                                             #TODO: type??
   config.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
+  #TODO: multiple input files (nargs='+')
+
   #TODO: need default config settings
   # APPLY SETTINGS & (RE)START CHRON JOB
   config.add_argument('-a', '--apply', action='store_true', help="")  # Interface to log
@@ -40,14 +42,17 @@ def getArgs(argv=sys.argv):
   history.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'), help="###0 for no limit, expected format is")
   #TODO: validate timestamp format/0 && START<=END
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
+  history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
   # Display Options
-  display = history.add_mutually_exclusive_group()
-  #.add_argument('-g', '--graph', )  # Graph Format
-  #.add_argument('-l', '--list', )  # List Format
-  #.add_argument('-h', '--human', )  # Human Readable Units  #TODO:-h??
-  #.add_argument('-r', '--raw', )  # Raw Data Format
-  #.add_argument('-s', '--save', )  # Save Raw Data
+  display = history.add_mutually_exclusive_group(required=True)  #TODO: default?
+  display.add_argument('-g', '--graph', )  # Graph Format
+  display.add_argument('-l', '--list', )  # List Format
+  history.add_argument('--human', '--hr', action='store_true' )  # Human Readable Units
+  #TODO: human readable only if -g/-l (type=<check args>)
+  #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
+  display.add_argument('-r', '--raw', )  # Raw Data Format
+  display.add_argument('-s', '--save', )  # Save Raw Data
 
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
