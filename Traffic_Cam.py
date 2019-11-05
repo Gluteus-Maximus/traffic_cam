@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 import json
 import time
+from default_subparser import set_default_subparser
 
 
 def getArgs(argv=sys.argv):
@@ -11,28 +12,47 @@ def getArgs(argv=sys.argv):
       description= "Log network traffic totals and display historical trends."
       )
   parser.add_argument()
-  mode = parser.add_mutually_exclusive_group()
-  mode.add_argument()  # Config Mode
-  mode.add_argument()  # History Mode (default)
+  mode = parser.add_subparsers(
+      help="###SUBPARSER HELP### default history",
+      metavar='mode')
+  config = mode.add_parser('config',
+      help="###Program Configuration Help###")  # Config Mode
+  history = mode.add_parser('history',
+      help="###History Display Help###")  # History Mode (default)
 
   # CONFIG MODE
   #TODO: use nargs instead??
-  #.add_argument("-i", "--interface", "--int", )  # Interface to log
-  #.add_argument("-f", "--frequency", "--freq", )  # Frequency of logging
-  #.add_argument("-p", "--filepath", "--path", )  # Path to netdev logfile
+  config.add_argument('-i', '--if', '--interface', nargs=1, type=str, help="")  # Interface to log
+  config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int, help="")  # Frequency of logging
+                                                            #TODO: type??
+  config.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
+  #TODO: need default config settings
+  # APPLY SETTINGS & (RE)START CHRON JOB
+  config.add_argument('-a', '--apply', action='store_true', help="")  # Interface to log
+
+  #parser.add_mutually_exclusive_group()
+
+  parser.set_default_subparser('history', insert_position=1)
+  print(parser.parse_args())
+
+  # CONFIG MODE
+  #TODO: use nargs instead??
+  #.add_argument('-i', '--interface', '--int', )  # Interface to log
+  #.add_argument('-f', '--frequency', '--freq', )  # Frequency of logging
+  #.add_argument('-p', '--filepath', '--path', )  # Path to netdev logfile
 
   # INITIATE CHRON
 
   # HISTORY MODE
-  #.add_argument("--load", )  # Load History from File
-  #.add_argument("-t", "--timeslice", nargs=2, metavar=("START", "END"))
+  #.add_argument('--load', )  # Load History from File
+  #.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'))
       #TODO:check START<=END
-  display = parser.add_mutually_exclusive_group()
-  #.add_argument("-g", "--graph", )  # Graph Format
-  #.add_argument("-l", "--list", )  # List Format
-  #.add_argument("-h", "--human", )  # Human Readable Units  #TODO:-h??
-  #.add_argument("-r", "--raw", )  # Raw Data Format
-  #.add_argument("-s", "--save", )  # Save Raw Data
+  #display = history.add_mutually_exclusive_group()
+  #.add_argument('-g', '--graph', )  # Graph Format
+  #.add_argument('-l', '--list', )  # List Format
+  #.add_argument('-h', '--human', )  # Human Readable Units  #TODO:-h??
+  #.add_argument('-r', '--raw', )  # Raw Data Format
+  #.add_argument('-s', '--save', )  # Save Raw Data
 
 
 def parse_netdev(interface):
