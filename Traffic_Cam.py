@@ -13,15 +13,18 @@ def getArgs(argv=sys.argv):
       )
   parser.add_argument()
   mode = parser.add_subparsers(
-      help="###SUBPARSER HELP### default history",
+      help="###SUBPARSER HELP### default history", #TODO
       metavar='mode')
   config = mode.add_parser('config',
-      help="###Program Configuration Help###")  # Config Mode
+      help="###Program Configuration Help###")  # Config Mode #TODO
   history = mode.add_parser('history',
-      help="###History Display Help###")  # History Mode (default)
+      help="###History Display Help###")  # History Mode (default) #TODO
 
-  # CONFIG MODE
+  ### CONFIG MODE ###
   #TODO: use nargs instead??
+  #TODO: help *4
+  #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
+  # Config Options
   config.add_argument('-i', '--if', '--interface', nargs=1, type=str, help="")  # Interface to log
   config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int, help="")  # Frequency of logging
                                                             #TODO: type??
@@ -29,30 +32,26 @@ def getArgs(argv=sys.argv):
   #TODO: need default config settings
   # APPLY SETTINGS & (RE)START CHRON JOB
   config.add_argument('-a', '--apply', action='store_true', help="")  # Interface to log
+  #help: changes are only applied when --apply/-a is used to restart chron job
 
-  #parser.add_mutually_exclusive_group()
+  ### HISTORY MODE ###
+  history.add_argument('--load', nargs=1, type=str, help="")  # Load History from File
+  #TODO: validate filepath
+  history.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'), help="###0 for no limit, expected format is")
+  #TODO: validate timestamp format/0 && START<=END
+  #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
 
-  parser.set_default_subparser('history', insert_position=1)
-  print(parser.parse_args())
-
-  # CONFIG MODE
-  #TODO: use nargs instead??
-  #.add_argument('-i', '--interface', '--int', )  # Interface to log
-  #.add_argument('-f', '--frequency', '--freq', )  # Frequency of logging
-  #.add_argument('-p', '--filepath', '--path', )  # Path to netdev logfile
-
-  # INITIATE CHRON
-
-  # HISTORY MODE
-  #.add_argument('--load', )  # Load History from File
-  #.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'))
-      #TODO:check START<=END
-  #display = history.add_mutually_exclusive_group()
+  # Display Options
+  display = history.add_mutually_exclusive_group()
   #.add_argument('-g', '--graph', )  # Graph Format
   #.add_argument('-l', '--list', )  # List Format
   #.add_argument('-h', '--human', )  # Human Readable Units  #TODO:-h??
   #.add_argument('-r', '--raw', )  # Raw Data Format
   #.add_argument('-s', '--save', )  # Save Raw Data
+
+  # Set default mode to 'History'
+  parser.set_default_subparser('history', insert_position=1)
+  print(parser.parse_args())  #TODO:DBG
 
 
 def parse_netdev(interface):
