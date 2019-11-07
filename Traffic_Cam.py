@@ -19,6 +19,7 @@ def getArgs(argv=sys.argv):
       help="###Program Configuration Help###")  # Config Mode #TODO
   history = mode.add_parser('history',
       help="###History Display Help###")  # History Mode (default) #TODO
+  #TODO: add auto_log mode
 
   ### CONFIG MODE ###
   #TODO: use nargs instead??
@@ -35,6 +36,8 @@ def getArgs(argv=sys.argv):
   # APPLY SETTINGS & (RE)START CHRON JOB
   config.add_argument('-a', '--apply', action='store_true', help="")  # Interface to log
   #help: changes are only applied when --apply/-a is used to restart chron job
+
+  #TODO: add auto_log mode
 
   ### HISTORY MODE ###
   history.add_argument('--load', nargs=1, type=str, help="")  # Load History from File
