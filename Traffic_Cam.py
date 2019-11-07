@@ -52,6 +52,7 @@ def create_chronjob():
   '''
   @func: Creates a chron job to automatically collect data.
   '''
+  #TODO: build separate module and API for this for future use
   #TODO: allow separate files per day/hours etc
   pass
 
