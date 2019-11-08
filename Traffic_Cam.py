@@ -202,3 +202,7 @@ def save_history(historyLst):
   @func: Output history to a json file.
   '''
   pass
+
+
+if __name__ == '__main__':
+  getArgs()  #TODO DBG
