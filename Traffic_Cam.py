@@ -7,6 +7,10 @@ import time
 from default_subparser import set_default_subparser
 
 
+def main():
+  args = getArgs()
+
+
 def getArgs(argv=sys.argv):
   #TODO: function string
   '''
@@ -14,6 +18,7 @@ def getArgs(argv=sys.argv):
   parser = ArgumentParser(
       description= "Log network traffic totals and display historical trends."
       )
+  #TODO: how to add 'action' to subparser call
   mode = parser.add_subparsers(
       help="###SUBPARSER HELP### default history", #TODO
       metavar='mode')
@@ -66,7 +71,7 @@ def getArgs(argv=sys.argv):
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
 
-  print(parser.parse_args())  #TODO:DBG
+  print("DEBUG:", parser.parse_args())  #TODO:DBG
   return parser.parse_args()
 
 
@@ -259,4 +264,4 @@ def load_history(filepath, startTS=None, endTS=None):
 
 
 if __name__ == '__main__':
-  getArgs()  #TODO DBG
+  main()
