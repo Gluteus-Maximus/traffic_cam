@@ -28,6 +28,7 @@ def getArgs(argv=sys.argv):
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
   # Config Options
   config.add_argument('-i', '--if', '--interface', nargs=1, type=str, help="")  # Interface to log
+  #TODO: validate interface exists
   config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int, help="")  # Frequency of logging
                                                             #TODO: type??
   config.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
@@ -39,7 +40,7 @@ def getArgs(argv=sys.argv):
 
   ### HISTORY MODE ###
   source = history.add_mutually_exclusive_group(required=False)
-  source.add_argument('--load', nargs=1, type=str, help="")  # Load Saved History from File
+  source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'), help="")  # Load Saved History from File
   #TODO: validate filepath
   source.add_argument('--logfiles', nargs='+', type=str, help="")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
   #TODO: multiple input files (nargs='+')
@@ -52,11 +53,11 @@ def getArgs(argv=sys.argv):
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default?
   display.add_argument('-g', '--graph', action='store_true', )  # Graph Format
   display.add_argument('-l', '--list', action='store_true', )  # List Format
-  history.add_argument('--human', '--hr', action='store_true' )  # Human Readable Units
+  history.add_argument('--hr', '--human', action='store_true' )  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args>)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
   display.add_argument('-r', '--raw', action='store_true', )  # Raw Data Format
-  display.add_argument('-s', '--save', action='store_true', )  # Save Raw Data
+  display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'))  # Save Raw Data
 
   ### AUTO LOG MODE ###
   auto_log.add_argument('interface', type=str, help="")  # Interface to log
@@ -78,6 +79,7 @@ def parse_netdev(interface):
   '''
   netdev = Path('/proc/net/dev')
   trafficRaw = netdev.read_text().split()
+  #TODO: validate fields exist
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names  #TODO: capture interface
       ('ts', time.time()),                # Timestamp
