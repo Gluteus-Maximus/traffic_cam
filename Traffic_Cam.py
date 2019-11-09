@@ -11,7 +11,7 @@ def getArgs(argv=sys.argv):
   parser = ArgumentParser(
       description= "Log network traffic totals and display historical trends."
       )
-  parser.add_argument()
+  #parser.add_argument()
   mode = parser.add_subparsers(
       help="###SUBPARSER HELP### default history", #TODO
       metavar='mode')
@@ -19,7 +19,8 @@ def getArgs(argv=sys.argv):
       help="###Program Configuration Help###")  # Config Mode #TODO
   history = mode.add_parser('history',
       help="###History Display Help###")  # History Mode (default) #TODO
-  #TODO: add auto_log mode
+  auto_log = mode.add_parser('auto_log',
+      help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
   ### CONFIG MODE ###
   #TODO: use nargs instead??
@@ -30,32 +31,36 @@ def getArgs(argv=sys.argv):
   config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int, help="")  # Frequency of logging
                                                             #TODO: type??
   config.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
-  #TODO: multiple input files (nargs='+')
 
   #TODO: need default config settings
   # APPLY SETTINGS & (RE)START CHRON JOB
-  config.add_argument('-a', '--apply', action='store_true', help="")  # Interface to log
+  config.add_argument('-a', '--apply', action='store_true', help="")  # Apply config (with changes) to chronjob
   #help: changes are only applied when --apply/-a is used to restart chron job
 
-  #TODO: add auto_log mode
-
   ### HISTORY MODE ###
-  history.add_argument('--load', nargs=1, type=str, help="")  # Load History from File
+  source = history.add_mutually_exclusive_group(required=False)
+  source.add_argument('--load', nargs=1, type=str, help="")  # Load Saved History from File
   #TODO: validate filepath
+  source.add_argument('--logfiles', nargs='+', type=str, help="")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
+  #TODO: multiple input files (nargs='+')
   history.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'), help="###0 for no limit, expected format is")
   #TODO: validate timestamp format/0 && START<=END
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
-  history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
+  #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
   # Display Options
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default?
-  display.add_argument('-g', '--graph', )  # Graph Format
-  display.add_argument('-l', '--list', )  # List Format
+  display.add_argument('-g', '--graph', action='store_true', )  # Graph Format
+  display.add_argument('-l', '--list', action='store_true', )  # List Format
   history.add_argument('--human', '--hr', action='store_true' )  # Human Readable Units
-  #TODO: human readable only if -g/-l (type=<check args>)
+  #TODO: human readable only if -g/-l (action=<check args>)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
-  display.add_argument('-r', '--raw', )  # Raw Data Format
-  display.add_argument('-s', '--save', )  # Save Raw Data
+  display.add_argument('-r', '--raw', action='store_true', )  # Raw Data Format
+  display.add_argument('-s', '--save', action='store_true', )  # Save Raw Data
+
+  ### AUTO LOG MODE ###
+  auto_log.add_argument('interface', type=str, help="")  # Interface to log
+  auto_log.add_argument('filepath', type=str, help="")  # Path to netdev logfile
 
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
@@ -74,7 +79,7 @@ def parse_netdev(interface):
   netdev = Path('/proc/net/dev')
   trafficRaw = netdev.read_text().split()
   idxZero = trafficRaw.index(interface + ":")
-  traffic = dict([  #TODO: shrink names
+  traffic = dict([  #TODO: shrink names  #TODO: capture interface
       ('ts', time.time()),                # Timestamp
       ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
       ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
