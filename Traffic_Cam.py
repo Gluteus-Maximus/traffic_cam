@@ -22,7 +22,7 @@ def getArgs(argv=sys.argv):
   history = mode.add_parser('history',
       help="###History Display Help###")  # History Mode (default) #TODO
   auto_log = mode.add_parser('auto_log',
-      help="###Auto-Logger Help###")  # Auto Log Mode #TODO
+      add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
   ### CONFIG MODE ###
   #TODO: help *4
@@ -60,8 +60,8 @@ def getArgs(argv=sys.argv):
 
   ### AUTO LOG MODE ###
   # All args are required
-  auto_log.add_argument('interface', type=str, help="")  # Interface to log
-  auto_log.add_argument('filepath', type=str, help="")  # Path to netdev logfile
+  auto_log.add_argument('--interface', type=str, required=True, help="")  # Interface to log
+  auto_log.add_argument('--filepath', type=str, required=True, help="")  # Path to netdev logfile
 
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
