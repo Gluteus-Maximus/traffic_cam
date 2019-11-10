@@ -70,6 +70,7 @@ def getArgs(argv=sys.argv):
   #TODO: validate timestamp format/0 && START<=END
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
+  #TODO: timestamp format string?
 
   # History Display Options
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
@@ -106,10 +107,47 @@ def getArgs(argv=sys.argv):
   return parser.parse_args()
 
 
+def load_config():
+  '''
+  @func: Loads and returns config settings.
+  @return: Dictionary of settings.
+  '''
+  fp = Path(configFile)
+  return json.loads(fp.read_text())
+
+
+### CONFIG MODE ###
 def do_config(args):
+  try:
+    with Path(configFile) as fp:
+      pass
   pass
 
 
+def create_config(interface=None, frequency=None, filepath=None):
+  '''
+  @func: Creates a config file for use by chron and splunk.
+  '''
+  pass
+
+
+def create_chronjob():
+  '''
+  @func: Creates a chron job to automatically collect data.
+  '''
+  #TODO: build separate module and API for this for future use
+  #TODO: allow separate files per day/hours etc
+  pass
+
+
+def generate_splunk_panel():
+  '''
+  @func: Generates a splunk panel to display histogram.
+  '''
+  pass
+
+
+### HISTORY MODE ###
 def do_history(args):
   '''
   '''
@@ -142,85 +180,12 @@ def do_history(args):
   return output_history(args.outputMode, historyLst, args.save)
 
 
-def do_auto_log(args):
-  pass
-
-
-def create_config(interface=None, frequency=None, filepath=None):
-  '''
-  @func: Creates a config file for use by chron and splunk.
-  '''
-  pass
-
-
-def load_config():
-  '''
-  @func: Loads and returns config settings.
-  @return: Dictionary of settings.
-  '''
-  fp = Path(configFile)
-  return json.loads(fp.read_text())
-
-
-def create_chronjob():
-  '''
-  @func: Creates a chron job to automatically collect data.
-  '''
-  #TODO: build separate module and API for this for future use
-  #TODO: allow separate files per day/hours etc
-  pass
-
-
-def generate_splunk_panel():
-  '''
-  @func: Generates a splunk panel to display histogram.
-  '''
-  pass
-
-
-def parse_netdev(interface):
-  '''
-  @func: Extracts relevant data from /proc/net/dev and returns as a dict.
-  @return: Dictionary of network traffic values.  Values are cumulative for the
-    life of the operating system.  All values are int's.
-    keys: rx_bytes, rx_pkts, tx_bytes, tx_pkts
-  @param interface: The network interface for which network traffic info will
-    be gathered.
-  '''
-  netdev = Path('/proc/net/dev')
-  trafficRaw = netdev.read_text().split()
-  #TODO: validate fields exist
-  idxZero = trafficRaw.index(interface + ":")
-  traffic = dict([  #TODO: shrink names
-      ('ts', time.time()),                     # Timestamp
-      ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
-      ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
-      ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
-      ('tx_p', int(trafficRaw[idxZero + 10]))  # Transmit Packets
-      ])
-  return traffic
-
-
-def store_netdev(traffic, filepath):  #TODO: rename to store_dict
-  '''
-  @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
-  @return: 0 for success, 1 for failure
-  '''
-  try:
-    with Path(filepath).open(mode='a') as fp:
-      fp.write(json.dumps(traffic) + "\n")
-    return 0
-  except Exception as e:  #TODO: specify
-    print("SAVE ERROR: {}".format(e))
-    return 1
-
-
 def load_netdev(files, startTS=None, endTS=None):
+  #TODO: cleanup!
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
   '''
-  #TODO: handle multiple files
   trafficLst = list()
   for filepath in files:
     try:
@@ -246,6 +211,7 @@ def generate_history(trafficLst):
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
   '''
+  #TODO: omit None?
   if trafficLst is None or len(trafficLst) < 2:
     print("ERROR: Not enough data to generate history", file=sys.stderr)
     #TODO: raise error
@@ -253,7 +219,7 @@ def generate_history(trafficLst):
 
   # Sort trafficLst by timestamp
   trafficLst = sorted([t for t in trafficLst if 'ts' in t.keys()], key = lambda x: x['ts'])
-  #TODO: remove list comprehension ^ -- try/except return None
+  #TODO: remove list comprehension ^ -- try/except skip
   historyLst = list()
   prevObj = trafficLst[0]
   for traffic in trafficLst[1:]:
@@ -274,6 +240,29 @@ def generate_history(trafficLst):
   return historyLst
 
 
+def load_history(filepath, startTS=None, endTS=None):
+  '''
+  @func: Creates a history list from json history file.
+  @return: List of history dict's (equiv. to historyLst)
+  '''
+  #TODO: handle multiple files
+  #TODO: overload load_netdev??
+  try:
+    with Path(filepath) as fp:
+      historyLst = list()
+      for line in [x for x in fp.read_text().split("\n") if x]:
+        traffic = json.loads(line)
+        #TODO: json.decoder.JSONDecodeError
+        if (startTS is None or traffic['startTS'] >= startTS) \
+            and (endTS is None or traffic['endTS'] <= endTS):
+          historyLst.append(traffic)
+        #TODO: skip bad entries (key/value checks) - try/except
+      return historyLst
+  except Exception as e:  #TODO: target exceptions
+    print("ERROR: {}".format(e), file=sys.stderr)
+    return None
+
+
 def output_history(outputMode, historyLst, filepath=None):
   '''
   @func: Wrapper function for various output options.
@@ -291,7 +280,6 @@ def output_history(outputMode, historyLst, filepath=None):
   # Call function from 'switch' according to 'mode'
   return switch[outputMode](historyLst, filepath)
     # 'filepath' is ignored where appropriate
-  pass
 
 
 def display_graph(historyLst, _):
@@ -334,27 +322,46 @@ def save_history(historyLst, filepath):
     store_netdev(item, filepath)
 
 
-def load_history(filepath, startTS=None, endTS=None):
+### AUTO LOG MODE ###
+def do_auto_log(args):
+  pass
+
+
+def parse_netdev(interface):
   '''
-  @func: Creates a history list from json history file.
-  @return: List of history dict's (equiv. to historyLst)
+  @func: Extracts relevant data from /proc/net/dev and returns as a dict.
+  @return: Dictionary of network traffic values.  Values are cumulative for the
+    life of the operating system.  All values are int's.
+    keys: rx_bytes, rx_pkts, tx_bytes, tx_pkts
+  @param interface: The network interface for which network traffic info will
+    be gathered.
   '''
-  #TODO: handle multiple files
-  #TODO: overload load_netdev??
+  netdev = Path('/proc/net/dev')
+  trafficRaw = netdev.read_text().split()
+  #TODO: validate fields exist
+  idxZero = trafficRaw.index(interface + ":")
+  traffic = dict([  #TODO: shrink names
+      ('ts', time.time()),                     # Timestamp
+      ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
+      ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
+      ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
+      ('tx_p', int(trafficRaw[idxZero + 10]))  # Transmit Packets
+      ])
+  return traffic
+
+
+def store_netdev(traffic, filepath):  #TODO: rename to store_dict
+  '''
+  @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
+  @return: 0 for success, 1 for failure
+  '''
   try:
-    with Path(filepath) as fp:
-      historyLst = list()
-      for line in [x for x in fp.read_text().split("\n") if x]:
-        traffic = json.loads(line)
-        #TODO: json.decoder.JSONDecodeError
-        if (startTS is None or traffic['startTS'] >= startTS) \
-            and (endTS is None or traffic['endTS'] <= endTS):
-          historyLst.append(traffic)
-          #TODO: skip bad entries (key/value checks)
-      return historyLst
-  except Exception as e:  #TODO: target exceptions
-    print("ERROR: {}".format(e), file=sys.stderr)
-    return None
+    with Path(filepath).open(mode='a') as fp:
+      fp.write(json.dumps(traffic) + "\n")
+    return 0
+  except Exception as e:  #TODO: specify
+    print("SAVE ERROR: {}".format(e))
+    return 1
 
 
 if __name__ == '__main__':
