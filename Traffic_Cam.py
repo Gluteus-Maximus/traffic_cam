@@ -7,6 +7,16 @@ import time
 from default_subparser import set_default_subparser
 
 
+def main():
+  args = getArgs()
+  switch = {
+      'config':   do_config,  # 
+      'history':  do_history,  # 
+      'auto_log': do_auto_log,  # 
+      }
+  return switch[args.mode](args)
+
+
 def getArgs(argv=sys.argv):
   #TODO: function string
   '''
@@ -14,10 +24,11 @@ def getArgs(argv=sys.argv):
   parser = ArgumentParser(
       description= "Log network traffic totals and display historical trends."
       )
-  mode = parser.add_subparsers(
-      help="###SUBPARSER HELP### default history", #TODO
-      metavar='mode')
-  config = mode.add_parser('config',
+  ### 'MODE' SUBPARSERS ###
+  #TODO: how to add 'action' to subparser call (ie. set mode string)
+  mode = parser.add_subparsers(dest='mode', metavar='MODE',
+      help="###SUBPARSER HELP### default history", )  #TODO
+  config = mode.add_parser('config', #action='store_true',
       help="###Program Configuration Help###")  # Config Mode #TODO
   history = mode.add_parser('history',
       help="###History Display Help###")  # History Mode (default) #TODO
@@ -37,6 +48,10 @@ def getArgs(argv=sys.argv):
   # APPLY SETTINGS & (RE)START CHRON JOB
   config.add_argument('-a', '--apply', action='store_true', help="")  # Apply config (with changes) to chronjob
   #help: changes are only applied when --apply/-a is used to restart chron job
+
+  # CREATE SPLUNK PANEL
+  #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
+  #TODO
 
   ### HISTORY MODE ###
   source = history.add_mutually_exclusive_group(required=False)
@@ -68,6 +83,18 @@ def getArgs(argv=sys.argv):
 
   print(parser.parse_args())  #TODO:DBG
   return parser.parse_args()
+
+
+def do_config(args):
+  pass
+
+
+def do_history(args):
+  pass
+
+
+def do_auto_log(args):
+  pass
 
 
 def parse_netdev(interface):
@@ -215,4 +242,4 @@ def save_history(historyLst):
 
 
 if __name__ == '__main__':
-  getArgs()  #TODO DBG
+  main()
