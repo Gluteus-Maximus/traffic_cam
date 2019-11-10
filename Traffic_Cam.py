@@ -7,6 +7,14 @@ import time
 from default_subparser import set_default_subparser
 
 
+static const configFile = '.traffic_cam.conf'
+static const configDefaults = {
+    'interface': 'eth0',
+    'frequency': 0,
+    'filepath':  'netdev.log'
+    }
+
+
 def main():
   args = getArgs()
   switch = {
