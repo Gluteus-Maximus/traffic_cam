@@ -97,6 +97,29 @@ def do_auto_log(args):
   pass
 
 
+def create_config():
+  '''
+  @func: Creates a config file for use by chron and splunk.
+  '''
+  pass
+
+
+def create_chronjob():
+  '''
+  @func: Creates a chron job to automatically collect data.
+  '''
+  #TODO: build separate module and API for this for future use
+  #TODO: allow separate files per day/hours etc
+  pass
+
+
+def generate_splunk_panel():
+  '''
+  @func: Generates a splunk panel to display histogram.
+  '''
+  pass
+
+
 def parse_netdev(interface):
   '''
   @func: Extracts relevant data from /proc/net/dev and returns as a dict.
@@ -132,29 +155,6 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
   except Exception as e:  #TODO: specify
     print("SAVE ERROR: {}".format(e))
     return 1
-
-
-def create_config():
-  '''
-  @func: Creates a config file for use by chron and splunk.
-  '''
-  pass
-
-
-def create_chronjob():
-  '''
-  @func: Creates a chron job to automatically collect data.
-  '''
-  #TODO: build separate module and API for this for future use
-  #TODO: allow separate files per day/hours etc
-  pass
-
-
-def generate_splunk_panel():
-  '''
-  @func: Generates a splunk panel to display histogram.
-  '''
-  pass
 
 
 def load_netdev(filepath, startTS=None, endTS=None):
@@ -211,7 +211,7 @@ def generate_history(trafficLst):
   return historyLst
 
 
-def output_history(mode, historyLst, filepath=None):
+def output_history(outputMode, historyLst, filepath=None):
   '''
   @func: Wrapper function for various output options.
   '''
@@ -225,7 +225,7 @@ def output_history(mode, historyLst, filepath=None):
       'save' : save_history
       }
   # Call function from 'switch' according to 'mode'
-  return switch[mode](historyLst, filepath)
+  return switch[outputMode](historyLst, filepath)
     # 'filepath' is ignored where appropriate
   pass
 
