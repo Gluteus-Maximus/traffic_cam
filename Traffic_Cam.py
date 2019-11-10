@@ -32,21 +32,26 @@ def getArgs(argv=sys.argv):
       help="###Program Configuration Help###")  # Config Mode #TODO
   history = mode.add_parser('history',
       help="###History Display Help###")  # History Mode (default) #TODO
+  # auto_log mode hidden from help dialogue, user shouldn't interact with this
   auto_log = mode.add_parser('auto_log',
       add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
   ### CONFIG MODE ###
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--if', '--interface', nargs=1, type=str, help="")  # Interface to log
+  config.add_argument('-i', '--if', '--interface', nargs=1, type=str,
+      help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
-  config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int, help="")  # Frequency of logging
-                                                            #TODO: type??
-  config.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
+  config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int,
+      help="###Not yet implemented")  # Frequency of logging
+  #TODO: validate freq                                      #TODO: type??
+  config.add_argument('-p', '--path', '--filepath', nargs=1, type=str,
+      help="###Not yet implemented")  # Path to netdev logfile
 
   #TODO: need default config settings
   # APPLY SETTINGS & (RE)START CHRON JOB
-  config.add_argument('-a', '--apply', action='store_true', help="")  # Apply config (with changes) to chronjob
+  config.add_argument('-a', '--apply', action='store_true',
+      help="###Not yet implemented")  # Apply config (with changes) to chronjob
   #help: changes are only applied when --apply/-a is used to restart chron job
 
   # CREATE SPLUNK PANEL
@@ -55,28 +60,41 @@ def getArgs(argv=sys.argv):
 
   ### HISTORY MODE ###
   source = history.add_mutually_exclusive_group(required=False)
-  source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'), help="")  # Load Saved History from File
+  source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'),
+      help="###Not yet implemented")  # Load Saved History from File
   #TODO: validate filepath
-  source.add_argument('--logfiles', nargs='+', type=str, help="")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
-  history.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'), help="###0 for no limit, expected format is")
+  source.add_argument('--logfiles', nargs='+', type=str,
+      help="###Not yet implemented")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
+  history.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'),
+      help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z")
   #TODO: validate timestamp format/0 && START<=END
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
   # History Display Options
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
-  display.add_argument('-g', '--graph', action='store_true', )  # Graph Format
-  display.add_argument('-l', '--list', action='store_true', )  # List Format
-  history.add_argument('--hr', '--human', action='store_true' )  # Human Readable Units
+  display.add_argument('-g', '--graph', dest='displayMode',
+      action='store_const', const='graph',
+      help="###Not yet implemented")  # Graph Format
+  display.add_argument('-l', '--list', dest='displayMode',
+      action='store_const', const='list',
+      help="###Not yet implemented")  # List Format
+  history.add_argument('--hr', '--human', action='store_true',
+      help="###Not yet implemented")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
-  display.add_argument('-r', '--raw', action='store_true', )  # Raw Data Format
-  display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'))  # Save Raw Data
+  display.add_argument('-r', '--raw', dest='displayMode',
+      action='store_const', const='raw',
+      help="###Not yet implemented")  # Raw Data Format
+  display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
+      help="###Not yet implemented")
+      #dest='displayMode', action='store_const', const='save', )  # Save Raw Data
+  #TODO: change to history arg, require display unless -s used, allow -s with display arg
 
   ### AUTO LOG MODE ###
   # All args are required
-  auto_log.add_argument('--interface', type=str, required=True, help="")  # Interface to log
-  auto_log.add_argument('--filepath', type=str, required=True, help="")  # Path to netdev logfile
+  auto_log.add_argument('--interface', type=str, required=True)  # Interface to log
+  auto_log.add_argument('--filepath', type=str, required=True)  # Path to netdev logfile
 
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
