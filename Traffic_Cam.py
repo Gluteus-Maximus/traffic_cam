@@ -65,7 +65,7 @@ def getArgs(argv=sys.argv):
   #TODO: validate filepath
   source.add_argument('--logfiles', nargs='+', type=str,
       help="###Not yet implemented")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
-  history.add_argument('-t', '--timeslice', nargs=2, metavar=('START', 'END'),
+  history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
       help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z")
   #TODO: validate timestamp format/0 && START<=END
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
@@ -73,22 +73,25 @@ def getArgs(argv=sys.argv):
 
   # History Display Options
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
-  display.add_argument('-g', '--graph', dest='displayMode',
+  display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
       help="###Not yet implemented")  # Graph Format
-  display.add_argument('-l', '--list', dest='displayMode',
+  display.add_argument('-l', '--list', dest='outputMode',
       action='store_const', const='list',
+      help="###Not yet implemented")  # List Format #TODO: remove??
+  display.add_argument('-t', '--table', dest='outputMode',
+      action='store_const', const='table',
       help="###Not yet implemented")  # List Format
   history.add_argument('--hr', '--human', action='store_true',
       help="###Not yet implemented")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
-  display.add_argument('-r', '--raw', dest='displayMode',
+  display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
       help="###Not yet implemented")  # Raw Data Format
   display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
       help="###Not yet implemented")
-      #dest='displayMode', action='store_const', const='save', )  # Save Raw Data
+      #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
 
   ### AUTO LOG MODE ###
@@ -143,7 +146,7 @@ def do_auto_log(args):
   pass
 
 
-def create_config():
+def create_config(interface=None, frequency=None, filepath=None):
   '''
   @func: Creates a config file for use by chron and splunk.
   '''
@@ -212,26 +215,30 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
     return 1
 
 
-def load_netdev(filepath, startTS=None, endTS=None):
+def load_netdev(files, startTS=None, endTS=None):
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
   '''
   #TODO: handle multiple files
   trafficLst = list()
-  try:
-    with Path(filepath) as fp:
-      for line in [x for x in fp.read_text().split("\n") if x]:
-        traffic = json.loads(line)
-        #TODO: json.decoder.JSONDecodeError
-        if (startTS is None or traffic['ts'] >= startTS) \
-            and (endTS is None or traffic['ts'] <= endTS):
-          trafficLst.append(traffic)
-          #TODO: skip bad entries (key/value checks) - try, continue
-    return trafficLst
-  except Exception as e:  #TODO: target exceptions
-    print("ERROR: {}".format(e), file=sys.stderr)
-    return None
+  for filepath in files:
+    try:
+      with Path(filepath) as fp:
+        for line in [x for x in fp.read_text().split("\n") if x]:
+          try:
+            traffic = json.loads(line)
+            #TODO: json.decoder.JSONDecodeError
+            if (startTS is None or traffic['ts'] >= startTS) \
+                and (endTS is None or traffic['ts'] <= endTS):
+              trafficLst.append(traffic)
+              #TODO: skip bad entries (key/value checks) - try, continue
+          except KeyError as e:
+            #print("ERROR: skipping bad line {}".format(e), file=sys.stderr)
+            continue
+    except Exception as e:  #TODO: target exceptions
+      print("ERROR: {}".format(e), file=sys.stderr)
+  return trafficLst if trafficLst else None
 
 
 def generate_history(trafficLst):
