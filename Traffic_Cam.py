@@ -108,7 +108,35 @@ def do_config(args):
 
 
 def do_history(args):
-  pass
+  '''
+  '''
+  # format timeslice
+  if args.timeslice is None:
+    args.timeslice = (None, None)
+  else:
+    if args.timeslice[0] == 0:
+      args.timeslice[0] = None
+    if args.timeslice[1] == 0:
+      args.timeslice[1] = None
+
+  # create historyLst
+  if args.load:
+    historyLst = load_history(args.load,
+        args.timeslice[0], args.timeslice[1])
+  else:
+    if args.logfiles:
+      trafficLst = load_netdev(args.logfiles,
+          args.timeslice[0], args.timeslice[1])
+    else:
+      config = load_config()
+      trafficLst = load_netdev([config['filepath']],
+          args.timeslice[0], args.timeslice[1])
+    historyLst = generate_history(trafficLst)
+
+  if historyLst is None:
+    return 0
+
+  return output_history(args.outputMode, historyLst, args.save)
 
 
 def do_auto_log(args):
@@ -120,6 +148,15 @@ def create_config():
   @func: Creates a config file for use by chron and splunk.
   '''
   pass
+
+
+def load_config():
+  '''
+  @func: Loads and returns config settings.
+  @return: Dictionary of settings.
+  '''
+  fp = Path(configFile)
+  return json.loads(fp.read_text())
 
 
 def create_chronjob():
@@ -202,8 +239,9 @@ def generate_history(trafficLst):
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
   '''
-  if len(trafficLst) < 2:
+  if trafficLst is None or len(trafficLst) < 2:
     print("ERROR: Not enough data to generate history", file=sys.stderr)
+    #TODO: raise error
     return None
 
   # Sort trafficLst by timestamp
@@ -239,6 +277,7 @@ def output_history(outputMode, historyLst, filepath=None):
   switch = {
       'graph': display_graph,
       'table': display_table,
+      'list' : display_list,
       'raw'  : display_raw,
       'save' : save_history
       }
@@ -261,6 +300,14 @@ def display_table(historyLst, _):
   @func: CLI display history as a table.
   '''
   print("display_table")  #TODO DBG
+  pass
+
+
+def display_list(historyLst, _):
+  '''
+  @func: CLI display history as a list.
+  '''
+  print("display_list")  #TODO DBG
   pass
 
 
