@@ -7,8 +7,9 @@ import time
 from default_subparser import set_default_subparser
 
 
-static const configFile = '.traffic_cam.conf'
-static const configDefaults = {
+### CONFIG DEFAULT VALUES ###
+configFile = '.traffic_cam.conf'
+configDefaults = {
     'interface': 'eth0',
     'frequency': 0,
     'filepath':  'netdev.log'
@@ -115,20 +116,22 @@ def getArgs(argv=sys.argv):
   return parser.parse_args()
 
 
-def load_config():
+def load_config(filepath=configFile):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
   '''
-  fp = Path(configFile)
-  return json.loads(fp.read_text())
+  try:
+    fp = Path(filepath)
+    return json.loads(fp.read_text())
+  except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+    print("ERROR: {}".format(e), file=sys.stderr)  #TODO: raise error, exit
 
 
 ### CONFIG MODE ###
 def do_config(args):
   try:
-    with Path(configFile) as fp:
-      pass
+    configs = load_config()
   except:
     pass
 
