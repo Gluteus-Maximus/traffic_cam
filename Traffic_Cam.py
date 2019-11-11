@@ -48,20 +48,20 @@ def getArgs(argv=sys.argv):
   ### CONFIG MODE ###
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--if', '--interface', nargs=1, type=str,
+  config.add_argument('-i', '--if', '--interface', dest='interface', nargs=1, type=str,
       help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
-  config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int,
+  config.add_argument('-f', '--freq', '--frequency', dest='frequency', nargs=1, type=int,
       help="###Not yet implemented")  # Frequency of logging
   #TODO: validate freq                                      #TODO: type??
-  config.add_argument('-p', '--path', '--filepath', nargs=1, type=str,
+  config.add_argument('-p', '--path', '--filepath', dest='filepath', nargs=1, type=str,
       help="###Not yet implemented")  # Path to netdev logfile
 
   #TODO: need default config settings
-  # APPLY SETTINGS & (RE)START CHRON JOB
+  # APPLY SETTINGS & (RE)START cron JOB
   config.add_argument('-a', '--apply', action='store_true',
-      help="###Not yet implemented")  # Apply config (with changes) to chronjob
-  #help: changes are only applied when --apply/-a is used to restart chron job
+      help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
+  #help: changes are only applied when --apply/-a is used to restart cron job
 
   # CREATE SPLUNK PANEL
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
@@ -124,31 +124,72 @@ def load_config(filepath=configFile):
   try:
     fp = Path(filepath)
     return json.loads(fp.read_text())
-  except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-    print("ERROR: {}".format(e), file=sys.stderr)  #TODO: raise error, exit
+  except FileNotFoundError as e:
+    #print("ERROR: {}".format(e), file=sys.stderr)  #TODO: raise error, exit
+    print("ERROR: config file missing - run \"./traffic_cam config -h\"".format(e), file=sys.stderr)  #TODO: raise error, exit
+  except json.decoder.JSONDecodeError as e:
+    print("ERROR: bad config file", file=sys.stderr)  #TODO: raise error, exit
+  #TODO: how to differentiate between raised exceptions?
 
 
 ### CONFIG MODE ###
+#TODO: STORYBOARD THIS FUNCTION!!!
 def do_config(args):
+  print("do_config")  #TODO DBG
   try:
     configs = load_config()
+    print(configs)  #TODO DBG
   except:
-    pass
+    print("ERROR: {}") #TODO: raise error in load_config
+    #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
+  # Add any missing keys to existing config (attempts to correct)
+  if configs is None:
+    configs = configDefaults
+  else:
+    for key, value in configDefaults:
+      if key not in configs.keys():  #TODO: correct or error out???
+        configs[key] = value
+  configs['interface'] = args.interface if args.interface else configs['interface']
+  configs['frequency'] = args.frequency if args.frequency else configs['frequency']
+  configs['filepath'] = args.filepath if args.filepath else configs['filepath']
+  try:
+    validate_config(configs)
+  except Exception as e:
+    raise Exception(e)
+  with Path(configFile) as fp:
+    try:
+      fp.write_text(json.dumps(configs))
+    except Exception as e:  #TODO: write access exception (x2)
+      raise Exception(e)
+  if args.apply is True:
+    try:
+      kill_cronjob()
+      create_cronjob(configs)
+    except Exception as e:  #TODO: specify exception (x2)
+      raise Exception(e)
 
-
+#TODO: XXX
 def create_config(interface=None, frequency=None, filepath=None):
   '''
-  @func: Creates a config file for use by chron and splunk.
+  @func: Creates a config file for use by cron and splunk.
   '''
   pass
 
 
-def create_chronjob():
+def validate_config(configs):
+  pass
+
+
+def create_cronjob():
   '''
-  @func: Creates a chron job to automatically collect data.
+  @func: Creates a cron job to automatically collect data.
   '''
   #TODO: build separate module and API for this for future use
-  #TODO: allow separate files per day/hours etc
+    #TODO: allow separate files per day/hours etc
+  pass
+
+
+def kill_cronjob():
   pass
 
 
@@ -360,6 +401,7 @@ def parse_netdev(interface):
   #TODO: validate fields exist
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
+      ('if', interface),                       # Interface
       ('ts', time.time()),                     # Timestamp
       ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
       ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
