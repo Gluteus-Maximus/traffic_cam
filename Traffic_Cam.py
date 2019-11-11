@@ -59,9 +59,12 @@ def getArgs(argv=sys.argv):
 
   #TODO: need default config settings
   # APPLY SETTINGS & (RE)START cron JOB
-  config.add_argument('-a', '--apply', action='store_true',
+  cron = config.add_mutually_exclusive_group()
+  cron.add_argument('-a', '--apply', action='store_true',
       help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
   #help: changes are only applied when --apply/-a is used to restart cron job
+  cron.add_argument('-k', '--kill', action='store_true',
+      help="###Not yet implemented -- need sudo/root??")  # Delete cron job (if exists)
 
   # CREATE SPLUNK PANEL
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
