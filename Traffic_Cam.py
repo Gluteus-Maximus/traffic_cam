@@ -83,7 +83,7 @@ def getArgs(argv=sys.argv):
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
       help="###Not yet implemented")  # List Format
-  history.add_argument('--hr', '--human', action='store_true',
+  history.add_argument('--hr', '--human', dest='human', action='store_true',
       help="###Not yet implemented")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
@@ -121,7 +121,8 @@ def do_config(args):
   try:
     with Path(configFile) as fp:
       pass
-  pass
+  except:
+    pass
 
 
 def create_config(interface=None, frequency=None, filepath=None):
@@ -163,16 +164,16 @@ def do_history(args):
   # create historyLst
   if args.load:
     historyLst = load_history(args.load,
-        args.timeslice[0], args.timeslice[1])
+        args.timeslice[0], args.timeslice[1], args.human)
   else:
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
-          args.timeslice[0], args.timeslice[1])
+          args.timeslice[0], args.timeslice[1], args.human)
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
           args.timeslice[0], args.timeslice[1])
-    historyLst = generate_history(trafficLst)
+    historyLst = generate_history(trafficLst, args.human)
 
   if historyLst is None:
     return 0
@@ -206,7 +207,7 @@ def load_netdev(files, startTS=None, endTS=None):
   return trafficLst if trafficLst else None
 
 
-def generate_history(trafficLst):
+def generate_history(trafficLst, humanRead=False):
   '''
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
@@ -240,7 +241,7 @@ def generate_history(trafficLst):
   return historyLst
 
 
-def load_history(filepath, startTS=None, endTS=None):
+def load_history(filepath, startTS=None, endTS=None, humanRead=False):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
@@ -295,7 +296,14 @@ def display_table(historyLst, _):
   @func: CLI display history as a table.
   '''
   print("display_table")  #TODO DBG
-  pass
+  if not historyLst:
+    return
+  print("Timestamp.....RX Bytes.....RX Packets.....TX Bytes.....TX Packets")
+  for item in historyLst:
+    #TODO: fix format, use ascii lines
+    print("{} | {} | {} | {} | {}".format(
+      item['endTS'], item['rx_b'], item['rx_p'], item['tx_b'], item['tx_p'])
+      )
 
 
 def display_list(historyLst, _):
