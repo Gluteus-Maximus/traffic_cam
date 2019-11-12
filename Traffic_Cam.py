@@ -11,7 +11,7 @@ from default_subparser import set_default_subparser
 configFile = '.traffic_cam.conf'
 configDefaults = {
     'interface': 'eth0',
-    'frequency': 0,
+    'frequency': 1,
     'filepath':  'netdev.log'
     }
 
@@ -48,17 +48,17 @@ def getArgs(argv=sys.argv):
   ### CONFIG MODE ###
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--if', '--interface', dest='interface', nargs=1, type=str,
+  config.add_argument('-i', '--interface', dest='interface', nargs=1, type=str,
       help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
-  config.add_argument('-f', '--freq', '--frequency', dest='frequency', nargs=1, type=int,
+  config.add_argument('-f', '--frequency', dest='frequency', nargs=1, type=int,
       help="###Not yet implemented")  # Frequency of logging
   #TODO: validate freq                                      #TODO: type??
-  config.add_argument('-p', '--path', '--filepath', dest='filepath', nargs=1, type=str,
+  config.add_argument('-p', '--filepath', dest='filepath', nargs=1, type=str,
       help="###Not yet implemented")  # Path to netdev logfile
 
   #TODO: need default config settings
-  # APPLY SETTINGS & (RE)START cron JOB
+  # START/STOP CRON JOB
   cron = config.add_mutually_exclusive_group()
   cron.add_argument('-a', '--apply', action='store_true',
       help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
@@ -161,15 +161,17 @@ def do_config(args):
     raise Exception(e)
   with Path(configFile) as fp:
     try:
-      fp.write_text(json.dumps(configs))
+      fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
     except Exception as e:  #TODO: write access exception (x2)
       raise Exception(e)
-  if args.apply is True:
-    try:
-      kill_cronjob()
+  try:
+    if args.apply is True:
+      delete_cronjob()
       create_cronjob(configs)
-    except Exception as e:  #TODO: specify exception (x2)
-      raise Exception(e)
+    elif args.kill is True:
+      delete_cronjob()
+  except Exception as e:  #TODO: specify exception (x2)
+    raise Exception(e)
 
 #TODO: XXX
 def create_config(interface=None, frequency=None, filepath=None):
@@ -192,7 +194,7 @@ def create_cronjob():
   pass
 
 
-def kill_cronjob():
+def delete_cronjob():
   pass
 
 
