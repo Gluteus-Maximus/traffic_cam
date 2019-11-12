@@ -182,7 +182,20 @@ def create_config(interface=None, frequency=None, filepath=None):
 
 
 def validate_config(configs):
-  pass
+  errors = list()
+  try:
+    validate_interfaces(configs['interface'])
+  except as e:
+    errors.append(e)
+  try:
+    validate_frequency(configs['frequency'])
+  except as e:
+    errors.append(e)
+  try:
+    validate_filepath(configs['filepath'])
+  except as e:
+    errors.append(e)
+
 
 
 def validate_interfaces(interface):
