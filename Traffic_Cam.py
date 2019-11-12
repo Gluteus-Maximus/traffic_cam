@@ -185,6 +185,23 @@ def validate_config(configs):
   pass
 
 
+def validate_interfaces(interface):
+  if interface not in get_interfaces():
+    #TODO: specify exception
+    raise Exception("'{}' interface does not exist. ".format(interface))
+
+
+def get_interfaces():
+  netdev = Path('/proc/net/dev')
+  netdevRaw = netdev.read_text().split()
+  #TODO: validate fields exist
+  interfaces = list()
+  idx = 20  # First interface idx (skip header strings)
+  while idx < len(netdevRaw):
+    interfaces.append(netdevRaw[idx].strip(":"))
+    idx += 17
+  return interfaces
+
 def create_cronjob():
   '''
   @func: Creates a cron job to automatically collect data.
