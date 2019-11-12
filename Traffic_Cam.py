@@ -175,6 +175,8 @@ def do_config(args):
       delete_cronjob()
   except Exception as e:  #TODO: specify exception (x2)
     raise Exception(e)
+  return 0
+
 
 #TODO: XXX
 def create_config(interface=None, frequency=None, filepath=None):
@@ -198,13 +200,15 @@ def validate_config(configs):
     validate_filepath(configs['filepath'])
   except Exception as e:
     errors.append(e)
-
+  if errors:
+    raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
+        "\n{}"*len(errors)).format(*errors))  #TODO DBG
 
 
 def validate_interfaces(interface):
   if interface not in get_interfaces():
     #TODO: specify exception
-    raise Exception("'{}' interface does not exist. ".format(interface))
+    raise Exception("Interface does not exist: '{}'".format(interface))
 
 
 def get_interfaces():
@@ -217,6 +221,12 @@ def get_interfaces():
     interfaces.append(netdevRaw[idx].strip(":"))
     idx += 17
   return interfaces
+
+
+def validate_frequency(frequency):
+  if type(frequency) is not int or frequency < 1 or frequency > 60:
+    raise Exception("Frequency must be a number between 1 and 60")
+
 
 def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
