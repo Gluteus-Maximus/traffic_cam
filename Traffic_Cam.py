@@ -7,6 +7,15 @@ import time
 from default_subparser import set_default_subparser
 
 
+### CONFIG DEFAULT VALUES ###
+configFile = '.traffic_cam.conf'
+configDefaults = {
+    'interface': 'eth0',
+    'frequency': 1,
+    'filepath':  'netdev.log'
+    }
+
+
 def main():
   args = getArgs()
   switch = {
@@ -14,7 +23,11 @@ def main():
       'history':  do_history,  # 
       'auto_log': do_auto_log,  # 
       }
-  return switch[args.mode](args)
+  try:
+    return switch[args.mode](args)
+  except Exception as e:
+    print(e, file=sys.stderr)
+    return 1
 
 
 def getArgs(argv=sys.argv):
@@ -39,20 +52,23 @@ def getArgs(argv=sys.argv):
   ### CONFIG MODE ###
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--if', '--interface', nargs=1, type=str,
+  config.add_argument('-i', '--interface', dest='interface', type=str,
       help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
-  config.add_argument('-f', '--freq', '--frequency', nargs=1, type=int,
-      help="###Not yet implemented")  # Frequency of logging
-  #TODO: validate freq                                      #TODO: type??
-  config.add_argument('-p', '--path', '--filepath', nargs=1, type=str,
+  config.add_argument('-f', '--frequency', dest='frequency', type=int,
+      help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
+                                                            #TODO: type??
+  config.add_argument('-p', '--filepath', dest='filepath', type=str,
       help="###Not yet implemented")  # Path to netdev logfile
 
   #TODO: need default config settings
-  # APPLY SETTINGS & (RE)START CHRON JOB
-  config.add_argument('-a', '--apply', action='store_true',
-      help="###Not yet implemented")  # Apply config (with changes) to chronjob
-  #help: changes are only applied when --apply/-a is used to restart chron job
+  # START/STOP CRON JOB
+  cron = config.add_mutually_exclusive_group()
+  cron.add_argument('-a', '--apply', action='store_true',
+      help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
+  #help: changes are only applied when --apply/-a is used to restart cron job
+  cron.add_argument('-k', '--kill', action='store_true',
+      help="###Not yet implemented -- need sudo/root??")  # Delete cron job (if exists)
 
   # CREATE SPLUNK PANEL
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
@@ -107,37 +123,132 @@ def getArgs(argv=sys.argv):
   return parser.parse_args()
 
 
-def load_config():
+def load_config(filepath=configFile):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
   '''
-  fp = Path(configFile)
-  return json.loads(fp.read_text())
+  try:
+    fp = Path(filepath)
+    return json.loads(fp.read_text())
+  except FileNotFoundError as e:
+    #print("ERROR: {}".format(e), file=sys.stderr)  #TODO: raise error, exit
+    print("ERROR: config file missing - './traffic_cam config -h'".format(e), file=sys.stderr)  #TODO: raise error, exit
+  except json.decoder.JSONDecodeError as e:
+    print("ERROR: bad config file", file=sys.stderr)  #TODO: raise error, exit
+  #TODO: how to differentiate between raised exceptions?
 
 
 ### CONFIG MODE ###
+#TODO: STORYBOARD THIS FUNCTION!!!
 def do_config(args):
+  print("do_config")  #TODO DBG
   try:
-    with Path(configFile) as fp:
-      pass
+    configs = load_config()
   except:
-    pass
+    print("ERROR: {}") #TODO: raise error in load_config
+    #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
+  # Add any missing keys to existing config (attempts to correct)
+  if configs is None:
+    configs = configDefaults
+  else:
+    for key, value in configDefaults.items():
+      if key not in configs.keys():  #TODO: correct or error out???
+        configs[key] = value
+  configs['interface'] = args.interface if args.interface else configs['interface']
+  configs['frequency'] = args.frequency if args.frequency else configs['frequency']
+  configs['filepath'] = args.filepath if args.filepath else configs['filepath']
+  try:
+    validate_config(configs)
+  except Exception as e:
+    raise Exception(e)
+  with Path(configFile) as fp:
+    try:
+      fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
+    except Exception as e:  #TODO: write access exception (x2)
+      raise Exception(e)
+  try:
+    if args.apply is True:
+      delete_cronjob()
+      create_cronjob(configs)
+    elif args.kill is True:
+      delete_cronjob()
+  except Exception as e:  #TODO: specify exception (x2)
+    raise Exception(e)
+  return 0
 
 
+#TODO: XXX
 def create_config(interface=None, frequency=None, filepath=None):
   '''
-  @func: Creates a config file for use by chron and splunk.
+  @func: Creates a config file for use by cron and splunk.
   '''
   pass
 
 
-def create_chronjob():
+def validate_config(configs):
+  errors = list()
+  try:
+    validate_interfaces(configs['interface'])
+  except Exception as e:
+    errors.append(e)
+  try:
+    validate_frequency(configs['frequency'])
+  except Exception as e:
+    errors.append(e)
+  try:
+    validate_filepath(configs['filepath'])
+  except Exception as e:
+    errors.append(e)
+  if errors:
+    raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
+        "\n{}"*len(errors)).format(*errors))  #TODO DBG
+
+
+def validate_interfaces(interface):
+  if interface not in get_interfaces():
+    #TODO: specify exception
+    raise Exception("Interface does not exist: '{}'".format(interface))
+
+
+def get_interfaces():
+  netdev = Path('/proc/net/dev')
+  netdevRaw = netdev.read_text().split()
+  #TODO: validate fields exist
+  interfaces = list()
+  idx = 20  # First interface idx (skip header strings)
+  while idx < len(netdevRaw):
+    interfaces.append(netdevRaw[idx].strip(":"))
+    idx += 17
+  return interfaces
+
+
+def validate_frequency(frequency):
+  if type(frequency) is not int or frequency < 1 or frequency > 60:
+    raise Exception("Frequency must be a number between 1 and 60")
+
+
+def validate_filepath(filepath):
+  try:
+    with open(filepath, 'a'):
+      pass
+  except OSError as e:
+    raise OSError(e)  #TODO: remove '[Errno \d+]' - regex
+
+
+def create_cronjob(configs):
+  #TODO: dynamic program name (sys.argv[0])
+  #TODO: add to PATH if not there (no abs/rel pathing)
   '''
-  @func: Creates a chron job to automatically collect data.
+  @func: Creates a cron job to automatically collect data.
   '''
   #TODO: build separate module and API for this for future use
-  #TODO: allow separate files per day/hours etc
+    #TODO: allow separate files per day/hours etc
+  pass
+
+
+def delete_cronjob():
+  #TODO: dynamic program name (sys.argv[0])
   pass
 
 
@@ -349,6 +460,7 @@ def parse_netdev(interface):
   #TODO: validate fields exist
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
+      ('if', interface),                       # Interface
       ('ts', time.time()),                     # Timestamp
       ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
       ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
