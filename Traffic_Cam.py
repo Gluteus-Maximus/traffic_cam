@@ -52,8 +52,8 @@ def getArgs(argv=sys.argv):
       help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
   config.add_argument('-f', '--frequency', dest='frequency', nargs=1, type=int,
-      help="###Not yet implemented")  # Frequency of logging
-  #TODO: validate freq                                      #TODO: type??
+      help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
+                                                            #TODO: type??
   config.add_argument('-p', '--filepath', dest='filepath', nargs=1, type=str,
       help="###Not yet implemented")  # Path to netdev logfile
 
