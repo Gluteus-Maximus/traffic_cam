@@ -23,7 +23,11 @@ def main():
       'history':  do_history,  # 
       'auto_log': do_auto_log,  # 
       }
-  return switch[args.mode](args)
+  try:
+    return switch[args.mode](args)
+  except Exception as e:
+    print(e, file=sys.stderr)
+    return 1
 
 
 def getArgs(argv=sys.argv):
@@ -48,13 +52,13 @@ def getArgs(argv=sys.argv):
   ### CONFIG MODE ###
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--interface', dest='interface', nargs=1, type=str,
+  config.add_argument('-i', '--interface', dest='interface', type=str,
       help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
-  config.add_argument('-f', '--frequency', dest='frequency', nargs=1, type=int,
+  config.add_argument('-f', '--frequency', dest='frequency', type=int,
       help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
                                                             #TODO: type??
-  config.add_argument('-p', '--filepath', dest='filepath', nargs=1, type=str,
+  config.add_argument('-p', '--filepath', dest='filepath', type=str,
       help="###Not yet implemented")  # Path to netdev logfile
 
   #TODO: need default config settings
@@ -129,7 +133,7 @@ def load_config(filepath=configFile):
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
     #print("ERROR: {}".format(e), file=sys.stderr)  #TODO: raise error, exit
-    print("ERROR: config file missing - run \"./traffic_cam config -h\"".format(e), file=sys.stderr)  #TODO: raise error, exit
+    print("ERROR: config file missing - './traffic_cam config -h'".format(e), file=sys.stderr)  #TODO: raise error, exit
   except json.decoder.JSONDecodeError as e:
     print("ERROR: bad config file", file=sys.stderr)  #TODO: raise error, exit
   #TODO: how to differentiate between raised exceptions?
@@ -141,7 +145,6 @@ def do_config(args):
   print("do_config")  #TODO DBG
   try:
     configs = load_config()
-    print(configs)  #TODO DBG
   except:
     print("ERROR: {}") #TODO: raise error in load_config
     #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
@@ -149,7 +152,7 @@ def do_config(args):
   if configs is None:
     configs = configDefaults
   else:
-    for key, value in configDefaults:
+    for key, value in configDefaults.items():
       if key not in configs.keys():  #TODO: correct or error out???
         configs[key] = value
   configs['interface'] = args.interface if args.interface else configs['interface']
@@ -185,15 +188,15 @@ def validate_config(configs):
   errors = list()
   try:
     validate_interfaces(configs['interface'])
-  except as e:
+  except Exception as e:
     errors.append(e)
   try:
     validate_frequency(configs['frequency'])
-  except as e:
+  except Exception as e:
     errors.append(e)
   try:
     validate_filepath(configs['filepath'])
-  except as e:
+  except Exception as e:
     errors.append(e)
 
 
@@ -215,7 +218,9 @@ def get_interfaces():
     idx += 17
   return interfaces
 
-def create_cronjob():
+def create_cronjob(configs):
+  #TODO: dynamic program name (sys.argv[0])
+  #TODO: add to PATH if not there (no abs/rel pathing)
   '''
   @func: Creates a cron job to automatically collect data.
   '''
@@ -225,6 +230,7 @@ def create_cronjob():
 
 
 def delete_cronjob():
+  #TODO: dynamic program name (sys.argv[0])
   pass
 
 
