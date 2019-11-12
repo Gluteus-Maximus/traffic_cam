@@ -228,6 +228,14 @@ def validate_frequency(frequency):
     raise Exception("Frequency must be a number between 1 and 60")
 
 
+def validate_filepath(filepath):
+  try:
+    with open(filepath, 'a'):
+      pass
+  except OSError as e:
+    raise OSError(e)  #TODO: remove '[Errno \d+]' - regex
+
+
 def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
   #TODO: add to PATH if not there (no abs/rel pathing)
