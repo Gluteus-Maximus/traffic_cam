@@ -49,7 +49,7 @@ def getArgs(argv=sys.argv):
   auto_log = mode.add_parser('auto_log',
       add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
-  ### CONFIG MODE ###
+  ### CONFIG MODE ARGS ###
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
   config.add_argument('-i', '--interface', dest='interface', type=str,
@@ -74,7 +74,7 @@ def getArgs(argv=sys.argv):
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
   #TODO
 
-  ### HISTORY MODE ###
+  ### HISTORY MODE ARGS ###
   source = history.add_mutually_exclusive_group(required=False)
   source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'),
       help="###Not yet implemented")  # Load Saved History from File
@@ -111,7 +111,7 @@ def getArgs(argv=sys.argv):
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
 
-  ### AUTO LOG MODE ###
+  ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel mode
   # All args are required
   auto_log.add_argument('--interface', type=str, required=True)  # Interface to log
@@ -161,7 +161,7 @@ def do_config(args):
   configs['frequency'] = args.frequency if args.frequency else configs['frequency']
   configs['filepath'] = args.filepath if args.filepath else configs['filepath']
   try:
-    validate_config(configs)
+    validate_configs(configs)
   except Exception as e:
     raise Exception(e)
   with Path(configFile) as fp:
@@ -180,15 +180,7 @@ def do_config(args):
   return 0
 
 
-#TODO: XXX
-def create_config(interface=None, frequency=None, filepath=None):
-  '''
-  @func: Creates a config file for use by cron and splunk.
-  '''
-  pass
-
-
-def validate_config(configs):
+def validate_configs(configs):
   #TODO: function string
   errors = list()
   try:
@@ -453,7 +445,11 @@ def save_history(historyLst, filepath):
 
 ### AUTO LOG MODE ###
 def do_auto_log(args):
-  pass
+  #TODO: send errors to error log
+  #TODO: try
+  traffic = parse_netdev(args.interface)
+  store_netdev(traffic, args.filepath)
+  return 0
 
 
 def parse_netdev(interface):
@@ -468,6 +464,7 @@ def parse_netdev(interface):
   netdev = Path('/proc/net/dev')
   trafficRaw = netdev.read_text().split()
   #TODO: validate fields exist
+  #TODO: try interface name, exception if not present
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
       ('if', interface),                       # Interface
