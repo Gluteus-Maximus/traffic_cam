@@ -19,8 +19,8 @@ configDefaults = {
 def main():
   args = getArgs()
   switch = {
-      'config':   do_config,  # 
-      'history':  do_history,  # 
+      'config':   do_config,    # 
+      'history':  do_history,   # 
       'auto_log': do_auto_log,  # 
       }
   try:
@@ -112,6 +112,7 @@ def getArgs(argv=sys.argv):
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
 
   ### AUTO LOG MODE ###
+  #TODO: add splunk panel mode
   # All args are required
   auto_log.add_argument('--interface', type=str, required=True)  # Interface to log
   auto_log.add_argument('--filepath', type=str, required=True)  # Path to netdev logfile
@@ -142,6 +143,7 @@ def load_config(filepath=configFile):
 ### CONFIG MODE ###
 #TODO: STORYBOARD THIS FUNCTION!!!
 def do_config(args):
+  #TODO: function string
   print("do_config")  #TODO DBG
   try:
     configs = load_config()
@@ -187,6 +189,7 @@ def create_config(interface=None, frequency=None, filepath=None):
 
 
 def validate_config(configs):
+  #TODO: function string
   errors = list()
   try:
     validate_interfaces(configs['interface'])
@@ -206,12 +209,14 @@ def validate_config(configs):
 
 
 def validate_interfaces(interface):
+  #TODO: function string
   if interface not in get_interfaces():
     #TODO: specify exception
     raise Exception("Interface does not exist: '{}'".format(interface))
 
 
 def get_interfaces():
+  #TODO: function string
   netdev = Path('/proc/net/dev')
   netdevRaw = netdev.read_text().split()
   #TODO: validate fields exist
@@ -224,11 +229,13 @@ def get_interfaces():
 
 
 def validate_frequency(frequency):
+  #TODO: function string
   if type(frequency) is not int or frequency < 1 or frequency > 60:
     raise Exception("Frequency must be a number between 1 and 60")
 
 
 def validate_filepath(filepath):
+  #TODO: function string
   try:
     with open(filepath, 'a'):
       pass
@@ -248,6 +255,7 @@ def create_cronjob(configs):
 
 
 def delete_cronjob():
+  #TODO: function string
   #TODO: dynamic program name (sys.argv[0])
   pass
 
@@ -260,7 +268,9 @@ def generate_splunk_panel():
 
 
 ### HISTORY MODE ###
+#TODO: add auto history function for auto_log to use in splunk panel mode
 def do_history(args):
+  #TODO: function string
   '''
   '''
   # format timeslice
