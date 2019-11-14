@@ -7,6 +7,9 @@ import time
 from default_subparser import set_default_subparser
 
 
+#TODO: this file must be owned by root/su, executable by all if possible
+
+
 ### CONFIG DEFAULT VALUES ###
 configFile = '.traffic_cam.conf'
 configDefaults = {
@@ -142,6 +145,9 @@ def load_config(filepath=configFile):
 
 ### CONFIG MODE ###
 #TODO: STORYBOARD THIS FUNCTION!!!
+#TODO: MUST BE ROOT/SU FOR MODE
+#TODO: ALL FILES SHOULD BE OWNED BY ROOT (except logs)
+#TODO: store target owner of log files in config?
 def do_config(args):
   #TODO: function string
   print("do_config")  #TODO DBG
@@ -238,6 +244,7 @@ def validate_filepath(filepath):
 def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
   #TODO: add to PATH if not there (no abs/rel pathing)
+  #TODO: expand filepath to absolute
   '''
   @func: Creates a cron job to automatically collect data.
   '''
@@ -439,6 +446,7 @@ def save_history(historyLst, filepath):
   '''
   @func: Output history to a json file. Overwrites file if exists.
   '''
+  #TODO: specify target file owner?
   for item in historyLst:
     store_netdev(item, filepath)
 
@@ -482,6 +490,7 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
   @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
   @return: 0 for success, 1 for failure
   '''
+  #TODO: specify target file owner?
   try:
     with Path(filepath).open(mode='a') as fp:
       fp.write(json.dumps(traffic) + "\n")
