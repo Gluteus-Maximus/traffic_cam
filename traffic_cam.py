@@ -256,6 +256,7 @@ def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
   #TODO: add to PATH if not there (no abs/rel pathing)
   #TODO: expand filepath to absolute
+  #TODO: build separate module and API for this for future use
   '''
   @func: Creates a cron job to automatically collect data.
   '''
@@ -268,6 +269,11 @@ def delete_cronjob():
   #TODO: function string
   #TODO: dynamic program name (sys.argv[0])
   pass
+
+
+def is_super_user():
+  #TODO
+  return True
 
 
 def generate_splunk_panel():
