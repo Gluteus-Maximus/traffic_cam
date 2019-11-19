@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
@@ -8,6 +9,7 @@ from default_subparser import set_default_subparser
 
 
 #TODO: this file must be owned by root/su, executable by all if possible
+#TODO: filewide: raise <exc>() from e
 
 
 ### CONFIG DEFAULT VALUES ###
@@ -17,6 +19,8 @@ configDefaults = {
     'frequency': 1,
     'filepath':  'netdev.log'
     }
+errorFilepath = '/var/log/traffic_cam.log'
+cronFilepath = '/etc/cron.d/traffic_cam_cron'
 
 
 def main():
@@ -53,6 +57,7 @@ def getArgs(argv=sys.argv):
       add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
   ### CONFIG MODE ARGS ###
+  #TODO: add auto history
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
   config.add_argument('-i', '--interface', dest='interface', type=str,
