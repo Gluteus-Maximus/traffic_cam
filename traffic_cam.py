@@ -122,8 +122,8 @@ def getArgs(argv=sys.argv):
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel mode
   # All args are required
-  auto_log.add_argument('--interface', type=str, required=True)  # Interface to log
-  auto_log.add_argument('--filepath', type=str, required=True)  # Path to netdev logfile
+  auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
+  auto_log.add_argument('-p', '--filepath', type=str, required=True)  # Path to netdev logfile
 
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
