@@ -141,10 +141,13 @@ def load_config(filepath=configFile):
     fp = Path(filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
-    #print("ERROR: {}".format(e), file=sys.stderr)  #TODO: raise error, exit
-    print("ERROR: config file missing - './traffic_cam config -h'".format(e), file=sys.stderr)  #TODO: raise error, exit
+    raise Exception(
+        "ERROR: config file missing - './traffic_cam config -h'"
+        ) from e
   except json.decoder.JSONDecodeError as e:
-    print("ERROR: bad config file", file=sys.stderr)  #TODO: raise error, exit
+    raise Exception(
+        "ERROR: bad config file",
+        )  #TODO: raise error, exit
   #TODO: how to differentiate between raised exceptions?
 
 
@@ -156,10 +159,12 @@ def load_config(filepath=configFile):
 def do_config(args):
   #TODO: function string
   print("do_config")  #TODO DBG
+  configs = None
   try:
     configs = load_config()
-  except:
-    print("ERROR: {}") #TODO: raise error in load_config
+  except Exception as e:
+    pass
+    #TODO: print warning
     #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
@@ -170,12 +175,13 @@ def do_config(args):
         configs[key] = value
   configs['interface'] = args.interface if args.interface else configs['interface']
   configs['frequency'] = args.frequency if args.frequency else configs['frequency']
-  configs['filepath'] = args.filepath if args.filepath else configs['filepath']
+  configs['filepath'] = args.filepath if args.filepath else configs['filepath']  #TODO: rename - netdev
   try:
     validate_configs(configs)
   except Exception as e:
     raise Exception(e)
-  with Path(configFile) as fp:
+  print(configs)  #TODO DBG
+  with Path(configFile) as fp:  #TODO: os.path.dirname(os.path.realpath(__file__))
     try:
       fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
     except Exception as e:  #TODO: write access exception (x2)
@@ -203,7 +209,7 @@ def validate_configs(configs):
   except Exception as e:
     errors.append(e)
   try:
-    validate_filepath(configs['filepath'])
+    validate_filepath(configs['filepath'])  #TODO: rename - netdev
   except Exception as e:
     errors.append(e)
   if errors:
@@ -272,6 +278,7 @@ def generate_splunk_panel():
 
 
 ### HISTORY MODE ###
+#TODO: time.ctime
 #TODO: add auto history function for auto_log to use in splunk panel mode
 def do_history(args):
   #TODO: function string
@@ -366,7 +373,7 @@ def generate_history(trafficLst, humanRead=False):
   return historyLst
 
 
-def load_history(filepath, startTS=None, endTS=None, humanRead=False):
+def load_history(filepath, startTS=None, endTS=None, humanRead=False): #TODO: replace None with 0
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
