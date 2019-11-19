@@ -260,9 +260,40 @@ def create_cronjob(configs):
   '''
   @func: Creates a cron job to automatically collect data.
   '''
-  #TODO: build separate module and API for this for future use
-    #TODO: allow separate files per day/hours etc
-  pass
+  if not is_super_user():  #TODO: try/exc on file creation instead
+    raise Exception("ERROR: Must be root.")
+  programPath = os.path.realpath(__file__)
+  #TODO: add error output 2>> {dir(programPath)/error.log}
+  # 0=dir 1=freq 2=interface 3=output filepath
+  netdevCronStr = \
+      "*/{1} * * * * root {0} auto_log -i {2} -p {3}".format(
+          programPath,
+          configs['frequency'],
+          configs['interface'],
+          os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
+  # 0=dir 1=freq 2=output filepath
+  historyCronStr = \
+      "*/{1} * * * * root {0} history -s {2} -t {3} {4}".format(
+          programPath,
+          configs['frequency'],
+          0, #os.path.realpath(configs['save']),  #TODO
+          0, #configs['startTS'],
+          0  #configs['endTS']
+          )
+  # 0=dir 1=netdev_cron 2=history_cron
+  historyCronStr = ""  #TODO DBG
+  cronStr = ''' \
+# /etc/cron.d/traffic_cam.cron: crontab entries for the traffic_cam package
+SHELL=/bin/sh
+
+{0}
+{1}
+  '''.format(netdevCronStr, historyCronStr)
+  try:
+    with Path(cronFilepath).open('w+') as fp:  #TODO: change mode to create
+      fp.write(cronStr)
+  except Exception as e:  #TODO: specify
+    raise Exception("ERROR: {}".format(e))
 
 
 def delete_cronjob():
