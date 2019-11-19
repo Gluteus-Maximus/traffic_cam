@@ -299,7 +299,12 @@ SHELL=/bin/sh
 def delete_cronjob():
   #TODO: function string
   #TODO: dynamic program name (sys.argv[0])
-  pass
+  if not is_super_user():  #TODO: try/exc on file creation instead
+    raise Exception("ERROR: Must be root.")
+  try:
+    os.remove(cronFilepath)
+  except Exception as e:  #TODO: specify
+    raise Exception("ERROR: {}".format(e))
 
 
 def is_super_user():
