@@ -63,6 +63,7 @@ def getArgs(argv=sys.argv):
   config.add_argument('-i', '--interface', dest='interface', type=str,
       help="###Not yet implemented")  # Interface to log
   #TODO: validate interface exists
+  #TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
   config.add_argument('-f', '--frequency', dest='frequency', type=int,
       help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
                                                             #TODO: type??
@@ -146,19 +147,19 @@ def load_config(filepath=configFile):
         ) from e
   except json.decoder.JSONDecodeError as e:
     raise Exception(
-        "ERROR: bad config file",
-        )  #TODO: raise error, exit
+        "ERROR: bad config file - './traffic_cam config -h'",
+        ) from e  #TODO: raise error, exit
   #TODO: how to differentiate between raised exceptions?
 
 
 ### CONFIG MODE ###
+#TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
 #TODO: STORYBOARD THIS FUNCTION!!!
 #TODO: MUST BE ROOT/SU FOR MODE
 #TODO: ALL FILES SHOULD BE OWNED BY ROOT (except logs)
 #TODO: store target owner of log files in config?
 def do_config(args):
   #TODO: function string
-  print("do_config")  #TODO DBG
   configs = None
   try:
     configs = load_config()
@@ -180,7 +181,6 @@ def do_config(args):
     validate_configs(configs)
   except Exception as e:
     raise Exception(e)
-  print(configs)  #TODO DBG
   with Path(configFile) as fp:  #TODO: os.path.dirname(os.path.realpath(__file__))
     try:
       fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
@@ -214,7 +214,7 @@ def validate_configs(configs):
     errors.append(e)
   if errors:
     raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
-        "\n{}"*len(errors)).format(*errors))  #TODO DBG
+        "\n{}"*len(errors)).format(*errors))
 
 
 def validate_interfaces(interface):
@@ -237,6 +237,7 @@ def get_interfaces():
   return interfaces
 
 
+#TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
 def validate_frequency(frequency):
   #TODO: function string
   if type(frequency) is not int or frequency < 1 or frequency > 60:
@@ -246,7 +247,7 @@ def validate_frequency(frequency):
 def validate_filepath(filepath):
   #TODO: function string
   try:
-    with open(filepath, 'a'):
+    with open(filepath, 'a'):  #TODO: chmod +rw
       pass
   except OSError as e:
     raise OSError(e)  #TODO: remove '[Errno \d+]' - regex
@@ -273,7 +274,7 @@ def create_cronjob(configs):
           os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
   # 0=dir 1=freq 2=output filepath
   historyCronStr = \
-      "*/{1} * * * * root {0} history -s {2} -t {3} {4}".format(
+      "*/{1} * * * * root {0} history -s {2} --time {3} {4}".format(
           programPath,
           configs['frequency'],
           0, #os.path.realpath(configs['save']),  #TODO
@@ -283,7 +284,7 @@ def create_cronjob(configs):
   # 0=dir 1=netdev_cron 2=history_cron
   historyCronStr = ""  #TODO DBG
   cronStr = ''' \
-# /etc/cron.d/traffic_cam.cron: crontab entries for the traffic_cam package
+# /etc/cron.d/traffic_cam_cron: cron.d entries for the traffic_cam package
 SHELL=/bin/sh
 
 {0}
@@ -328,12 +329,7 @@ def do_history(args):
   '''
   # format timeslice
   if args.timeslice is None:
-    args.timeslice = (None, None)
-  else:
-    if args.timeslice[0] == 0:
-      args.timeslice[0] = None
-    if args.timeslice[1] == 0:
-      args.timeslice[1] = None
+    args.timeslice = (0, 0)
 
   # create historyLst
   if args.load:
@@ -355,7 +351,7 @@ def do_history(args):
   return output_history(args.outputMode, historyLst, args.save)
 
 
-def load_netdev(files, startTS=None, endTS=None):
+def load_netdev(files, startTS=0, endTS=0):
   #TODO: cleanup!
   '''
   @func: Creates iterable of netdev values.
@@ -369,8 +365,8 @@ def load_netdev(files, startTS=None, endTS=None):
           try:
             traffic = json.loads(line)
             #TODO: json.decoder.JSONDecodeError
-            if (startTS is None or traffic['ts'] >= startTS) \
-                and (endTS is None or traffic['ts'] <= endTS):
+            if (startTS == 0 or traffic['ts'] >= startTS) \
+                and (endTS == 0 or traffic['ts'] <= endTS):
               trafficLst.append(traffic)
               #TODO: skip bad entries (key/value checks) - try, continue
           except KeyError as e:
@@ -382,6 +378,7 @@ def load_netdev(files, startTS=None, endTS=None):
 
 
 def generate_history(trafficLst, humanRead=False):
+  #TODO: DROP NEGATIVE VALUE EVENTS!
   '''
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
@@ -392,8 +389,12 @@ def generate_history(trafficLst, humanRead=False):
     #TODO: raise error
     return None
 
-  # Sort trafficLst by timestamp
-  trafficLst = sorted([t for t in trafficLst if 'ts' in t.keys()], key = lambda x: x['ts'])
+  # Sort trafficLst by timestamp, drop bad entries
+  netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])  #TODO: link to parse_netdev
+  trafficLst = sorted(
+      [t for t in trafficLst if set(t.keys()) == netdevKeys],
+      key = lambda x: x['ts']
+      )
   #TODO: remove list comprehension ^ -- try/except skip
   historyLst = list()
   prevObj = trafficLst[0]
@@ -401,21 +402,27 @@ def generate_history(trafficLst, humanRead=False):
     nextObj = traffic
     try:
       historyObj = dict([
-        ('startTS', prevObj['ts']),                   # Start Timestamp
-        ('endTS', nextObj['ts']),                     # End Timestamp
-        ('rx_b', nextObj['rx_b'] - prevObj['rx_b']),  # Diff Receive Bytes
-        ('rx_p', nextObj['rx_p'] - prevObj['rx_p']),  # Diff Receive Packets
-        ('tx_b', nextObj['tx_b'] - prevObj['tx_b']),  # Diff Transmit Bytes
-        ('tx_p', nextObj['tx_p'] - prevObj['tx_p']),  # Diff Transmit Packets
+        ('startTS', prevObj['ts']),  # Start Timestamp
+        ('endTS', nextObj['ts']),    # End Timestamp
+        ('rx_b', nextObj['rx_b']),   # Receive Bytes
+        ('rx_p', nextObj['rx_p']),   # Receive Packets
+        ('tx_b', nextObj['tx_b']),   # Transmit Bytes
+        ('tx_p', nextObj['tx_p']),   # Transmit Packets
         ])
+      if (historyObj['rx_b'] - prevObj['rx_b']) >= 0:  # Skips rollover events
+        historyObj['rx_b'] -= prevObj['rx_b']  # Diff Receive Bytes
+        historyObj['rx_p'] -= prevObj['rx_p']  # Diff Receive Packets
+        historyObj['tx_b'] -= prevObj['tx_b']  # Diff Transmit Bytes
+        historyObj['tx_p'] -= prevObj['tx_p']  # Diff Transmit Packets
       historyLst.append(historyObj)
     except KeyError:
       print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
+      continue
     prevObj = traffic
   return historyLst
 
 
-def load_history(filepath, startTS=None, endTS=None, humanRead=False): #TODO: replace None with 0
+def load_history(filepath, startTS=0, endTS=0, humanRead=False): #TODO: replace None with 0
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
@@ -428,8 +435,8 @@ def load_history(filepath, startTS=None, endTS=None, humanRead=False): #TODO: re
       for line in [x for x in fp.read_text().split("\n") if x]:
         traffic = json.loads(line)
         #TODO: json.decoder.JSONDecodeError
-        if (startTS is None or traffic['startTS'] >= startTS) \
-            and (endTS is None or traffic['endTS'] <= endTS):
+        if (startTS == 0 or traffic['startTS'] >= startTS) \
+            and (endTS == 0 or traffic['endTS'] <= endTS):
           historyLst.append(traffic)
         #TODO: skip bad entries (key/value checks) - try/except
       return historyLst
@@ -469,7 +476,6 @@ def display_table(historyLst, _):
   '''
   @func: CLI display history as a table.
   '''
-  print("display_table")  #TODO DBG
   if not historyLst:
     return
   print("Timestamp.....RX Bytes.....RX Packets.....TX Bytes.....TX Packets")
