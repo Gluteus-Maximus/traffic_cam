@@ -109,17 +109,20 @@ def getArgs(argv=sys.argv):
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
       help="###Not yet implemented")  # List Format
-  history.add_argument('--hr', '--human', dest='human', action='store_true',
-      help="###Not yet implemented")  # Human Readable Units
-  #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
-  #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
+      help="###Not yet implemented")  # Raw Data Format
+  display.add_argument('-a', '--average', dest='outputMode',
+      action='store_const', const='average',
       help="###Not yet implemented")  # Raw Data Format
   display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
       help="###Not yet implemented")
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
+  history.add_argument('--hr', '--human', dest='human', action='store_true',
+      help="###Not yet implemented")  # Human Readable Units
+  #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
+  #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
 
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel mode
@@ -456,11 +459,12 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   # Filepath validation for 'save' mode happens during arg parsing
   #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
   switch = {
-      'graph': display_graph,
-      'table': display_table,
-      'list' : display_list,
-      'raw'  : display_raw,
-      'save' : save_history
+      'graph'  : display_graph,
+      'table'  : display_table,
+      'list'   : display_list,
+      'raw'    : display_raw,
+      'save'   : save_history,
+      'average': display_average
       }
   # Call function from 'switch' according to 'mode'
   return switch[outputMode](historyLst, filepath, humanRead)
@@ -520,11 +524,35 @@ def save_history(historyLst, filepath, _):
   return 0
 
 
-def display_averages(historyLst, _, humanRead):
+def display_average(historyLst, _, humanRead):
   '''
   '''
+  #TODO: try/exc
   # Print time range
+  minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
+  maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
+  print("Average Utilization: '{}' to '{}'\n".format(
+      time.ctime(minTS),
+      time.ctime(maxTS)))
   # Calc and print averages
+  rx_b = [x['rx_b'] for x in historyLst]
+  rx_b = sum(rx_b) / (maxTS - minTS)
+  rx_p = [x['rx_p'] for x in historyLst]
+  rx_p = sum(rx_p) / (maxTS - minTS)
+  tx_b = [x['tx_b'] for x in historyLst]
+  tx_b = sum(tx_b) / (maxTS - minTS)
+  tx_p = [x['tx_p'] for x in historyLst]
+  tx_p = sum(tx_p) / (maxTS - minTS)
+  averageStr = '''\
+Receive Data
+ {0:0.0f} {1}/s
+Receive Packets
+ {2:0.2f} pkt/s
+Transmit Data
+ {3:0.0f} {4}/s
+Transmit Packets
+ {5:0.2f} pkt/s'''
+  print(averageStr.format(*(rx_b, "B"), rx_p, *(tx_b, "B"), tx_p))  #TODO: B/MB/GB
   return 0
 
 
