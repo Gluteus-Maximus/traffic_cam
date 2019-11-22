@@ -6,6 +6,7 @@ from pathlib import Path
 import json
 import time
 from default_subparser import set_default_subparser
+#TODO: human readable module
 
 
 #TODO: this file must be owned by root/su, executable by all if possible
@@ -91,7 +92,7 @@ def getArgs(argv=sys.argv):
   source.add_argument('--logfiles', nargs='+', type=str,
       help="###Not yet implemented")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z")
+      help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z, -Y/-Z for Y/Z minutes ago.")
   #TODO: validate timestamp format/0 && START<=END
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
@@ -186,6 +187,7 @@ def do_config(args):
       fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
     except Exception as e:  #TODO: write access exception (x2)
       raise Exception(e)
+  print(configs)  #TODO DBG
   try:
     if args.apply is True:
       delete_cronjob()
@@ -321,7 +323,7 @@ def generate_splunk_panel():
 
 
 ### HISTORY MODE ###
-#TODO: time.ctime
+#TODO: static headers (move with scroll)
 #TODO: add auto history function for auto_log to use in splunk panel mode
 def do_history(args):
   #TODO: function string
@@ -338,7 +340,7 @@ def do_history(args):
   else:
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
-          args.timeslice[0], args.timeslice[1], args.human)
+          args.timeslice[0], args.timeslice[1])
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
@@ -348,11 +350,12 @@ def do_history(args):
   if historyLst is None:
     return 0
 
-  return output_history(args.outputMode, historyLst, args.save)
+  return output_history(args.outputMode, historyLst, args.save, args.human)
 
 
 def load_netdev(files, startTS=0, endTS=0):
   #TODO: cleanup!
+  #TODO: handle negative timeslice
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
@@ -364,12 +367,12 @@ def load_netdev(files, startTS=0, endTS=0):
         for line in [x for x in fp.read_text().split("\n") if x]:
           try:
             traffic = json.loads(line)
-            #TODO: json.decoder.JSONDecodeError
             if (startTS == 0 or traffic['ts'] >= startTS) \
                 and (endTS == 0 or traffic['ts'] <= endTS):
+              #TODO: validate all fields
               trafficLst.append(traffic)
-              #TODO: skip bad entries (key/value checks) - try, continue
-          except KeyError as e:
+          except (KeyError, json.decoder.JSONDecodeError) as e:
+            # skip bad entries
             #print("ERROR: skipping bad line {}".format(e), file=sys.stderr)
             continue
     except Exception as e:  #TODO: target exceptions
@@ -422,7 +425,7 @@ def generate_history(trafficLst, humanRead=False):
   return historyLst
 
 
-def load_history(filepath, startTS=0, endTS=0, humanRead=False): #TODO: replace None with 0
+def load_history(filepath, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
@@ -445,7 +448,7 @@ def load_history(filepath, startTS=0, endTS=0, humanRead=False): #TODO: replace 
     return None
 
 
-def output_history(outputMode, historyLst, filepath=None):
+def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   '''
   @func: Wrapper function for various output options.
   '''
@@ -460,55 +463,69 @@ def output_history(outputMode, historyLst, filepath=None):
       'save' : save_history
       }
   # Call function from 'switch' according to 'mode'
-  return switch[outputMode](historyLst, filepath)
+  return switch[outputMode](historyLst, filepath, humanRead)
     # 'filepath' is ignored where appropriate
 
 
-def display_graph(historyLst, _):
+def display_graph(historyLst, _, humanRead):
   '''
   @func: CLI display history as a graph.
   '''
   print("display_graph")  #TODO DBG
+  return 0
   pass
 
 
-def display_table(historyLst, _):
+def display_table(historyLst, _, humanRead):
   '''
   @func: CLI display history as a table.
   '''
   if not historyLst:
-    return
+    return 1
   print("Timestamp.....RX Bytes.....RX Packets.....TX Bytes.....TX Packets")
   for item in historyLst:
     #TODO: fix format, use ascii lines
     print("{} | {} | {} | {} | {}".format(
-      item['endTS'], item['rx_b'], item['rx_p'], item['tx_b'], item['tx_p'])
+      time.ctime(item['endTS']), item['rx_b'], item['rx_p'], item['tx_b'], item['tx_p'])
       )
+  return 0
 
 
-def display_list(historyLst, _):
+def display_list(historyLst, _, humanRead):
   '''
   @func: CLI display history as a list.
   '''
   print("display_list")  #TODO DBG
-  pass
+  return 0
 
 
-def display_raw(historyLst, _):
+def display_raw(historyLst, *_):
   '''
   @func: CLI display history as raw data.
   '''
   for item in historyLst:
     print(item)
+  return 0
 
 
-def save_history(historyLst, filepath):
+def save_history(historyLst, filepath, _):
   '''
   @func: Output history to a json file. Overwrites file if exists.
+    Always stores raw values (byte count and epoch timestamps).
   '''
   #TODO: specify target file owner?
+  #TODO: try/exc file
   for item in historyLst:
     store_netdev(item, filepath)
+  return 0
+
+
+def display_averages(historyLst, _, humanRead):
+  '''
+  '''
+  # Print time range
+  # Calc and print averages
+  return 0
 
 
 ### AUTO LOG MODE ###
@@ -536,7 +553,7 @@ def parse_netdev(interface):
   idxZero = trafficRaw.index(interface + ":")
   traffic = dict([  #TODO: shrink names
       ('if', interface),                       # Interface
-      ('ts', time.time()),                     # Timestamp
+      ('ts', int(time.time())),                # Timestamp
       ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
       ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
       ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
