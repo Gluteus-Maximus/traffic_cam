@@ -119,6 +119,9 @@ def getArgs(argv=sys.argv):
   display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
       help="###Not yet implemented")
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
+  display.add_argument('-a', '--average', dest='outputMode',
+      action='store_const', const='average',
+      help="###Not yet implemented")  # Raw Data Format
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
 
   ### AUTO LOG MODE ARGS ###
@@ -520,7 +523,7 @@ def save_history(historyLst, filepath, _):
   return 0
 
 
-def display_averages(historyLst, _, humanRead):
+def display_average(historyLst, _, humanRead):
   '''
   '''
   # Print time range
