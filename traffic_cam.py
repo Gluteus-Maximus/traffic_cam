@@ -459,11 +459,12 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   # Filepath validation for 'save' mode happens during arg parsing
   #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
   switch = {
-      'graph': display_graph,
-      'table': display_table,
-      'list' : display_list,
-      'raw'  : display_raw,
-      'save' : save_history
+      'graph'  : display_graph,
+      'table'  : display_table,
+      'list'   : display_list,
+      'raw'    : display_raw,
+      'save'   : save_history,
+      'average': display_average
       }
   # Call function from 'switch' according to 'mode'
   return switch[outputMode](historyLst, filepath, humanRead)
