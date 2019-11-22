@@ -109,20 +109,20 @@ def getArgs(argv=sys.argv):
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
       help="###Not yet implemented")  # List Format
-  history.add_argument('--hr', '--human', dest='human', action='store_true',
-      help="###Not yet implemented")  # Human Readable Units
-  #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
-  #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
+      help="###Not yet implemented")  # Raw Data Format
+  display.add_argument('-a', '--average', dest='outputMode',
+      action='store_const', const='average',
       help="###Not yet implemented")  # Raw Data Format
   display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
       help="###Not yet implemented")
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
-  display.add_argument('-a', '--average', dest='outputMode',
-      action='store_const', const='average',
-      help="###Not yet implemented")  # Raw Data Format
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
+  history.add_argument('--hr', '--human', dest='human', action='store_true',
+      help="###Not yet implemented")  # Human Readable Units
+  #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
+  #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
 
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel mode
