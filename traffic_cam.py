@@ -527,8 +527,32 @@ def save_history(historyLst, filepath, _):
 def display_average(historyLst, _, humanRead):
   '''
   '''
+  #TODO: try/exc
   # Print time range
+  minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
+  maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
+  print("Average Utilization: '{}' to '{}'\n".format(
+      time.ctime(minTS),
+      time.ctime(maxTS)))
   # Calc and print averages
+  rx_b = [x['rx_b'] for x in historyLst]
+  rx_b = sum(rx_b) / (maxTS - minTS)
+  rx_p = [x['rx_p'] for x in historyLst]
+  rx_p = sum(rx_p) / (maxTS - minTS)
+  tx_b = [x['tx_b'] for x in historyLst]
+  tx_b = sum(tx_b) / (maxTS - minTS)
+  tx_p = [x['tx_p'] for x in historyLst]
+  tx_p = sum(tx_p) / (maxTS - minTS)
+  averageStr = '''\
+Receive Data
+ {0:0.0f} {1}/s
+Receive Packets
+ {2:0.2f} pkt/s
+Transmit Data
+ {3:0.0f} {4}/s
+Transmit Packets
+ {5:0.2f} pkt/s'''
+  print(averageStr.format(*(rx_b, "B"), rx_p, *(tx_b, "B"), tx_p))  #TODO: B/MB/GB
   return 0
 
 
