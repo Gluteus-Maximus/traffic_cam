@@ -297,6 +297,7 @@ def create_cronjob(configs):
   #TODO: build separate module and API for this for future use
   '''
   @func: Creates a cron job to automatically collect data.
+  @param: configs: Dictionary of configs loaded from file.
   '''
   if not is_super_user():  #TODO: try/exc on file creation instead
     raise Exception("ERROR: Must be root.")
@@ -328,7 +329,7 @@ SHELL=/bin/sh
 {1}
   '''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('w+') as fp:  #TODO: change mode to create
+    with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
       fp.write(cronStr)
   except Exception as e:  #TODO: specify
     raise Exception("ERROR: {}".format(e))
