@@ -287,7 +287,8 @@ def validate_filepath(filepath):
   '''
   @func: Check that provided filepath either exists and can be appended to or
     file can be created.
-  @param: filepath: Filepath to check.
+  @param:
+    filepath: Filepath to check.
   '''
   try:
     # Filepath is relative to current working directory
@@ -303,8 +304,9 @@ def create_cronjob(configs):
   #TODO: expand filepath to absolute
   #TODO: build separate module and API for this for future use
   '''
-  @func: Creates a cron job to automatically collect data.
-  @param: configs: Dictionary of configs loaded from file.
+  @func: Create a cron job in '/etc/cron.d' to automatically collect data.
+  @param:
+    configs: Dictionary of configs loaded from file.
   '''
   if not is_super_user():  #TODO: try/exc on file creation instead
     raise Exception("ERROR: Must be root.")
