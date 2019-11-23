@@ -336,26 +336,34 @@ SHELL=/bin/sh
 
 {0}
 {1}
-  '''.format(netdevCronStr, historyCronStr)
+'''.format(netdevCronStr, historyCronStr)
   try:
     with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
       fp.write(cronStr)
   except Exception as e:  #TODO: specify
+    print('DBG')
     raise Exception("ERROR: {}".format(e))
 
 
 def delete_cronjob():
-  #TODO: function string
+  '''
+  @func: Delete the cron file in '/etc/cron.d', stop auto logger.
+  '''
   #TODO: dynamic program name (sys.argv[0])
   if not is_super_user():  #TODO: try/exc on file creation instead
     raise Exception("ERROR: Must be root.")
   try:
     os.remove(cronFilepath)
   except Exception as e:  #TODO: specify
-    raise Exception("ERROR: {}".format(e))
+    pass
+    #TODO: ignore '[Errno 2]', raise others
+    #raise Exception("ERROR: {}".format(e))
 
 
 def is_super_user():
+  '''
+  @func: Check if current user has root privileges.
+  '''
   #TODO
   return True
 
