@@ -365,7 +365,8 @@ SHELL=/bin/sh
   try:
     with Path(cronFilepath).open('x') as fp:
       fp.write(cronStr)
-  except FileNotFoundError as e:
+  #except FileNotFoundError as e:
+  except PermissionError as e:
     print('DBG')
     raise e #Exception("ERROR: {}".format(e))
 
