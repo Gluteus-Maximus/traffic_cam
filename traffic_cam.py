@@ -16,7 +16,7 @@ from default_subparser import set_default_subparser
 ### CONFIG DEFAULT VALUES ###
 configFile = '.traffic_cam.conf'
 configDefaults = {
-    'interface': 'eth0',
+    'interface': None,
     'frequency': 1,
     'filepath':  'netdev.log'
     }
@@ -25,7 +25,10 @@ cronFilepath = '/etc/cron.d/traffic_cam_cron'
 
 
 def main():
-  args = getArgs()
+  '''
+  @func: Primary handler function for program.
+  '''
+  args = get_args()
   switch = {
       'config':   do_config,    # 
       'history':  do_history,   # 
@@ -38,12 +41,19 @@ def main():
     return 1
 
 
-def getArgs(argv=sys.argv):
-  #TODO: function string
+def get_args(argv=sys.argv):
   '''
+  @func: Parses arguments for program and provides help (-h) dialogue. Provides
+    three modes: config, history, and auto_log.
+    > Config mode should be run as root, and allows the user to set config
+    options and start or stop the auto logger cronjob.
+    > Auto_log mode is called by the cronjob to automatically parse and store
+    network traffic data. This mode is hidden from the user.
+    > History mode allows the user to examine the historical trends of network
+    traffic in several formats.
   '''
   parser = ArgumentParser(
-      description= "Log network traffic totals and display historical trends."
+      description="Log network traffic totals and display historical trends."
       )
   ### 'MODE' SUBPARSERS ###
   #TODO: how to add 'action' to subparser call (ie. set mode string)
@@ -58,6 +68,7 @@ def getArgs(argv=sys.argv):
       add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
   ### CONFIG MODE ARGS ###
+  #TODO: add status??
   #TODO: add auto history
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
@@ -141,17 +152,20 @@ def load_config(filepath=configFile):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
+  @param:
+    filepath: Relative path to program config file.
   '''
   try:
+    #TODO: fix relative path
     fp = Path(filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
     raise Exception(
-        "ERROR: config file missing - './traffic_cam config -h'"
+        "CONFIG ERROR: config file missing - './traffic_cam config -h'"
         ) from e
   except json.decoder.JSONDecodeError as e:
     raise Exception(
-        "ERROR: bad config file - './traffic_cam config -h'",
+        "CONFIG ERROR: bad config file - './traffic_cam config -h'",
         ) from e  #TODO: raise error, exit
   #TODO: how to differentiate between raised exceptions?
 
@@ -163,12 +177,17 @@ def load_config(filepath=configFile):
 #TODO: ALL FILES SHOULD BE OWNED BY ROOT (except logs)
 #TODO: store target owner of log files in config?
 def do_config(args):
-  #TODO: function string
+  '''
+  @func: Config Mode - modify and apply configuration changes, manage automatic
+    data logging cronjob.
+  @param:
+    args: Namespace of argument parser.
+  '''
   configs = None
   try:
     configs = load_config()
   except Exception as e:
-    pass
+    print(e, file=sys.stderr)  # warn user and continue
     #TODO: print warning
     #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
   # Add any missing keys to existing config (attempts to correct)
@@ -203,7 +222,11 @@ def do_config(args):
 
 
 def validate_configs(configs):
-  #TODO: function string
+  '''
+  @func: Check that working config values are valid.
+  @param:
+    configs: Dictionary of configs loaded from file.
+  '''
   errors = list()
   try:
     validate_interfaces(configs['interface'])
@@ -223,13 +246,24 @@ def validate_configs(configs):
 
 
 def validate_interfaces(interface):
-  #TODO: function string
+  '''
+  @func: Check that provided interface is in list of valid interfaces.
+  @param:
+    interface: String, interface to check.
+  '''
+  if interface is None:
+    #TODO: specify exception
+    raise Exception("No interface provided.")
   if interface not in get_interfaces():
     #TODO: specify exception
     raise Exception("Interface does not exist: '{}'".format(interface))
 
 
 def get_interfaces():
+  '''
+  @func: Parse /proc/net/dev to make a list of valid interfaces.
+  @return: List of strings, valid interfaces.
+  '''
   #TODO: function string
   netdev = Path('/proc/net/dev')
   netdevRaw = netdev.read_text().split()
@@ -250,8 +284,14 @@ def validate_frequency(frequency):
 
 
 def validate_filepath(filepath):
-  #TODO: function string
+  '''
+  @func: Check that provided filepath either exists and can be appended to or
+    file can be created.
+  @param:
+    filepath: Filepath to check.
+  '''
   try:
+    # Filepath is relative to current working directory
     with open(filepath, 'a'):  #TODO: chmod +rw
       pass
   except OSError as e:
@@ -264,7 +304,9 @@ def create_cronjob(configs):
   #TODO: expand filepath to absolute
   #TODO: build separate module and API for this for future use
   '''
-  @func: Creates a cron job to automatically collect data.
+  @func: Create a cron job in '/etc/cron.d' to automatically collect data.
+  @param:
+    configs: Dictionary of configs loaded from file.
   '''
   if not is_super_user():  #TODO: try/exc on file creation instead
     raise Exception("ERROR: Must be root.")
@@ -294,26 +336,34 @@ SHELL=/bin/sh
 
 {0}
 {1}
-  '''.format(netdevCronStr, historyCronStr)
+'''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('w+') as fp:  #TODO: change mode to create
+    with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
       fp.write(cronStr)
   except Exception as e:  #TODO: specify
+    print('DBG')
     raise Exception("ERROR: {}".format(e))
 
 
 def delete_cronjob():
-  #TODO: function string
+  '''
+  @func: Delete the cron file in '/etc/cron.d', stop auto logger.
+  '''
   #TODO: dynamic program name (sys.argv[0])
   if not is_super_user():  #TODO: try/exc on file creation instead
     raise Exception("ERROR: Must be root.")
   try:
     os.remove(cronFilepath)
   except Exception as e:  #TODO: specify
-    raise Exception("ERROR: {}".format(e))
+    pass
+    #TODO: ignore '[Errno 2]', raise others
+    #raise Exception("ERROR: {}".format(e))
 
 
 def is_super_user():
+  '''
+  @func: Check if current user has root privileges.
+  '''
   #TODO
   return True
 
@@ -329,8 +379,11 @@ def generate_splunk_panel():
 #TODO: static headers (move with scroll)
 #TODO: add auto history function for auto_log to use in splunk panel mode
 def do_history(args):
-  #TODO: function string
   '''
+  @func: History Mode - Allows the user to examine the historical trends of network
+    traffic in several formats.
+  @param:
+    args: Namespace of argument parser.
   '''
   # populate null timeslice
   if args.timeslice is None:
@@ -363,10 +416,13 @@ def do_history(args):
 
 def load_netdev(files, startTS=0, endTS=0):
   #TODO: cleanup!
-  #TODO: handle negative timeslice
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
+  @param:
+    files: Iterable of filepaths to load log data from.
+    startTS: Integer/Float timestamp to start from.
+    endTS: Integer/Float timestamp to end at.
   '''
   trafficLst = list()
   for filepath in files:
@@ -389,10 +445,13 @@ def load_netdev(files, startTS=0, endTS=0):
 
 
 def generate_history(trafficLst, humanRead=False):
-  #TODO: DROP NEGATIVE VALUE EVENTS!
   '''
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
+  @return: List of dictionaries, history events.
+  @param:
+    trafficLst: Iterable of dictionaries, traffic logs.
+    humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: omit None?
   if trafficLst is None or len(trafficLst) < 2:
@@ -437,6 +496,10 @@ def load_history(filepath, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
+  @param:
+    filepath: Path to saved history file.
+    startTS: Integer/Float timestamp to start from.
+    endTS: Integer/Float timestamp to end at.
   '''
   #TODO: handle multiple files
   #TODO: overload load_netdev??
@@ -459,6 +522,11 @@ def load_history(filepath, startTS=0, endTS=0):
 def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   '''
   @func: Wrapper function for various output options.
+  @param:
+    outputMode: String, output method to call at switch.
+    historyLst: Iterable of dictionaries, history events.
+    filepath: Output filepath, used by 'save' mode.
+    humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: validation?
   # Filepath validation for 'save' mode happens during arg parsing
@@ -531,12 +599,13 @@ def save_history(historyLst, filepath, _):
 
 def display_average(historyLst, _, humanRead):
   '''
+  @func: CLI display average traffic values per second.
   '''
   #TODO: try/exc
   # Print time range
   minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
   maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
-  print("Average Utilization: '{}' to '{}'\n".format(
+  print("Average Traffic: '{}' to '{}'\n".format(
       time.ctime(minTS),
       time.ctime(maxTS)))
   # Calc and print averages
@@ -563,6 +632,10 @@ Transmit Packets
 
 ### AUTO LOG MODE ###
 def do_auto_log(args):
+  '''
+  @func: Auto_Log Mode - Parse /proc/net/dev and store data in logfile.
+  @param: args: Namespace of argument parser.
+  '''
   #TODO: send errors to error log
   #TODO: try
   traffic = parse_netdev(args.interface)
@@ -575,9 +648,10 @@ def parse_netdev(interface):
   @func: Extracts relevant data from /proc/net/dev and returns as a dict.
   @return: Dictionary of network traffic values.  Values are cumulative for the
     life of the operating system.  All values are int's.
-    keys: rx_bytes, rx_pkts, tx_bytes, tx_pkts
-  @param interface: The network interface for which network traffic info will
-    be gathered.
+    keys: if, ts, rx_b, rx_p, tx_b, tx_p
+  @param:
+    interface: The network interface for which network traffic info will be
+      gathered.
   '''
   netdev = Path('/proc/net/dev')
   trafficRaw = netdev.read_text().split()
@@ -599,6 +673,9 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
   '''
   @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
   @return: 0 for success, 1 for failure
+  @param:
+    traffic: Dictionary, /proc/net/dev values for single log event.
+    filepath: Path to logfile to append.
   '''
   #TODO: specify target file owner?
   try:
