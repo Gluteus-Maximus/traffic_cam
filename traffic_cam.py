@@ -118,7 +118,6 @@ def get_args(argv=sys.argv):
         "shows records from 10 minutes ago until 5 minutes ago.")
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
-  #TODO: timestamp format string?
 
   # History Display Options
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
@@ -156,7 +155,7 @@ def get_args(argv=sys.argv):
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
 
-  print("DEBUG:", parser.parse_args())  #TODO:DBG
+  print("DEBUG:", parser.parse_args(), "\n")  #TODO:DBG
   return parser.parse_args()
 
 
@@ -172,14 +171,13 @@ def load_config(filepath=configFile):
     fp = Path(filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
-    raise Exception(
+    raise FileNotFoundError(
         "CONFIG ERROR: config file missing - './traffic_cam config -h'"
         ) from e
   except json.decoder.JSONDecodeError as e:
-    raise Exception(
+    raise json.decoder.JSONDecodeError(
         "CONFIG ERROR: bad config file - './traffic_cam config -h'",
-        ) from e  #TODO: raise error, exit
-  #TODO: how to differentiate between raised exceptions?
+        ) from e
 
 
 ### CONFIG MODE ###
@@ -200,8 +198,6 @@ def do_config(args):
     configs = load_config()
   except Exception as e:
     print(e, file=sys.stderr)  # warn user and continue
-    #TODO: print warning
-    #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
     configs = configDefaults
