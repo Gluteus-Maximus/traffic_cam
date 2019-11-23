@@ -648,9 +648,10 @@ def parse_netdev(interface):
   @func: Extracts relevant data from /proc/net/dev and returns as a dict.
   @return: Dictionary of network traffic values.  Values are cumulative for the
     life of the operating system.  All values are int's.
-    keys: rx_bytes, rx_pkts, tx_bytes, tx_pkts
-  @param interface: The network interface for which network traffic info will
-    be gathered.
+    keys: if, ts, rx_b, rx_p, tx_b, tx_p
+  @param:
+    interface: The network interface for which network traffic info will be
+      gathered.
   '''
   netdev = Path('/proc/net/dev')
   trafficRaw = netdev.read_text().split()
@@ -672,6 +673,9 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
   '''
   @func: Saves a snapshot of /proc/net/dev to the json file at filepath.
   @return: 0 for success, 1 for failure
+  @param:
+    traffic: Dictionary, /proc/net/dev values for single log event.
+    filepath: Path to logfile to append.
   '''
   #TODO: specify target file owner?
   try:
