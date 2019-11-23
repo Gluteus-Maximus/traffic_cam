@@ -277,8 +277,13 @@ def validate_frequency(frequency):
 
 
 def validate_filepath(filepath):
-  #TODO: function string
+  '''
+  @func: Check that provided filepath either exists and can be appended to or
+    file can be created.
+  @param: filepath: Filepath to check.
+  '''
   try:
+    # Filepath is relative to current working directory
     with open(filepath, 'a'):  #TODO: chmod +rw
       pass
   except OSError as e:
