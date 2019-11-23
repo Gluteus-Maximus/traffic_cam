@@ -264,7 +264,6 @@ def get_interfaces():
   @func: Parse /proc/net/dev to make a list of valid interfaces.
   @return: List of strings, valid interfaces.
   '''
-  #TODO: function string
   netdev = Path('/proc/net/dev')
   netdevRaw = netdev.read_text().split()
   #TODO: validate fields exist
@@ -278,7 +277,6 @@ def get_interfaces():
 
 #TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
 def validate_frequency(frequency):
-  #TODO: function string
   if type(frequency) is not int or frequency < 1 or frequency > 60:
     raise Exception("Frequency must be a number between 1 and 60")
 
