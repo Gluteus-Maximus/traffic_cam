@@ -76,26 +76,26 @@ def get_args(argv=sys.argv):
   ### CONFIG MODE ARGS ###
   #TODO: add status check??
   #TODO: add auto history for splunk
-  #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--interface', dest='interface', type=str,
-      help="###Not yet implemented")  # Interface to log
-  #TODO: validate interface exists
+  config.add_argument('-i', '--interface', dest='interface',
+      type=str, metavar='IF',
+      help="Name of interface to log (eth0, etc.)")  # Interface to log
   #TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
-  config.add_argument('-f', '--frequency', dest='frequency', type=int,
-      help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
-                                                            #TODO: type??
-  config.add_argument('-p', '--filepath', dest='filepath', type=str,
-      help="###Not yet implemented")  # Path to netdev logfile
+  config.add_argument('-f', '--frequency', dest='frequency',
+      type=int, metavar='FREQ',
+      help="Interval to log in minutes. #REMOVE#")  # Frequency of logging
+  config.add_argument('-p', '--filepath', dest='filepath',
+      type=str, metavar='PATH',
+      help="Filepath to logfile for traffic data.")  # Path to netdev logfile
 
-  #TODO: need default config settings
   # START/STOP CRON JOB
   cron = config.add_mutually_exclusive_group()
+  # Apply Configs and Create Cronjob
   cron.add_argument('-a', '--apply', action='store_true',
-      help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
-  #help: changes are only applied when --apply/-a is used to restart cron job
+      help="Apply config (with changes) and start cronjob.")
+  # Delete Cronjob
   cron.add_argument('-k', '--kill', action='store_true',
-      help="###Not yet implemented -- need sudo/root??")  # Delete cron job (if exists)
+      help="Stop cronjob if running.")
 
   # CREATE SPLUNK PANEL
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
