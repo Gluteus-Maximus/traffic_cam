@@ -202,7 +202,9 @@ def do_config(args):
 
   if args.interface is None and \
       args.frequency is None and \
-      args.filepath is None:
+      args.filepath is None and \
+      args.apply is False and \
+      args.kill is False:
     print("Stored Configs: {}".format(configs))
 
   # Add any missing keys to existing config (attempts to correct)
