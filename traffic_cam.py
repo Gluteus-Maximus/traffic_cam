@@ -103,14 +103,19 @@ def get_args(argv=sys.argv):
 
   ### HISTORY MODE ARGS ###
   source = history.add_mutually_exclusive_group(required=False)
-  source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'),
-      help="###Not yet implemented")  # Load Saved History from File
+  # Load Saved History
+  source.add_argument('--load', nargs=1, type=str, metavar=('PATH'),
+      help="Load saved history data from file.")
   #TODO: validate filepath
-  source.add_argument('--logfiles', nargs='+', type=str,
-      help="###Not yet implemented")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
+  # Input Logfile(s)
+  source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
+      help="Specify input netdev logfile(s).")
+  # Timeslice
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z, -Y/-Z for Y/Z minutes ago.")
-  #TODO: validate timestamp format/0 && START<=END
+      help="Timestamp window to process. Positive values are used for epoch " +
+        "timestamps. Zero (0) is unbounded, or all data. Negative values "
+        "are used for relative offset in minutes (e.g. \"--time -10 -5\" "
+        "shows records from 10 minutes ago until 5 minutes ago.")
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
   #TODO: timestamp format string?
@@ -119,30 +124,31 @@ def get_args(argv=sys.argv):
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
   display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
-      help="###Not yet implemented")  # Graph Format
+      help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
   display.add_argument('-l', '--list', dest='outputMode',
       action='store_const', const='list',
-      help="###Not yet implemented")  # List Format #TODO: remove??
+      help="Display as a list.#NOT IMPLEMENTED#")  # List Format
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
-      help="###Not yet implemented")  # List Format
+      help="Display as a formatted table.")  # Table Format
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
-      help="###Not yet implemented")  # Raw Data Format
+      help="Display raw history data.")  # Raw Data Format
   display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
       action='store_const', const='average',
-      help="###Not yet implemented")  # Raw Data Format
-  display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
-      help="###Not yet implemented")
+      help="Display average values (per second).")  # Raw Data Format
+  display.add_argument('-s', '--save', nargs=1, metavar=('PATH'),
+      help="Save raw history data to file.")
+      #TODO: multiple actions, store const x2
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
   history.add_argument('--hr', '--human', dest='human', action='store_true',
-      help="###Not yet implemented")  # Human Readable Units
+      help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
 
   ### AUTO LOG MODE ARGS ###
-  #TODO: add splunk panel mode
+  #TODO: add splunk panel/history mode
   # All args are required
   auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
   auto_log.add_argument('-p', '--filepath', type=str, required=True)  # Path to netdev logfile
