@@ -151,18 +151,20 @@ def get_args(argv=sys.argv):
 def load_config(filepath=configFile):
   '''
   @func: Loads and returns config settings.
+  @param: filepath: Relative path to program config file.
   @return: Dictionary of settings.
   '''
   try:
+    #TODO: fix relative path
     fp = Path(filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
     raise Exception(
-        "ERROR: config file missing - './traffic_cam config -h'"
+        "CONFIG ERROR: config file missing - './traffic_cam config -h'"
         ) from e
   except json.decoder.JSONDecodeError as e:
     raise Exception(
-        "ERROR: bad config file - './traffic_cam config -h'",
+        "CONFIG ERROR: bad config file - './traffic_cam config -h'",
         ) from e  #TODO: raise error, exit
   #TODO: how to differentiate between raised exceptions?
 
@@ -174,12 +176,16 @@ def load_config(filepath=configFile):
 #TODO: ALL FILES SHOULD BE OWNED BY ROOT (except logs)
 #TODO: store target owner of log files in config?
 def do_config(args):
-  #TODO: function string
+  '''
+  @func: Config Mode - modify and apply configuration changes, manage automatic
+    data logging cronjob.
+  @param: args: Namespace of argument parser.
+  '''
   configs = None
   try:
     configs = load_config()
   except Exception as e:
-    pass
+    print(e, file=sys.stderr)  # warn user and continue
     #TODO: print warning
     #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
   # Add any missing keys to existing config (attempts to correct)
