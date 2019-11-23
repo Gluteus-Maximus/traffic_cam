@@ -200,12 +200,14 @@ def do_config(args):
   except Exception as e:  # warn user and continue
     print("CONFIG LOAD ERROR: {}".format(e), file=sys.stderr)
 
+  # If no args provided print saved configs
   if args.interface is None and \
       args.frequency is None and \
       args.filepath is None and \
       args.apply is False and \
       args.kill is False:
     print("Stored Configs: {}".format(configs))
+    return 0
 
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
