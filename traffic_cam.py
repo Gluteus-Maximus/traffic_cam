@@ -345,7 +345,7 @@ def create_cronjob(configs):
           configs['interface'],
           os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
   # 0=dir 1=freq 2=output filepath
-  historyCronStr = \
+  historyCronStr = \ #if history (arg):
       "*/{1} * * * * root {0} history -s {2} --time {3} {4}".format(
           programPath,
           configs['frequency'],
@@ -368,7 +368,7 @@ SHELL=/bin/sh
   #except FileNotFoundError as e:
   except PermissionError as e:
     print('DBG')
-    raise e #Exception("ERROR: {}".format(e))
+    raise e
 
 
 def delete_cronjob():
@@ -380,10 +380,9 @@ def delete_cronjob():
   try:
     os.remove(cronFilepath)
   except PermissionError as e:
-    raise e #PermissionError(e.args[1]) from e
+    raise e
   except FileNotFoundError as e:
     raise e
-    #pass  # File absent, ignore
 
 
 def is_super_user():  #TODO: remove?
