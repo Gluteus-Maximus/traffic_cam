@@ -445,10 +445,13 @@ def load_netdev(files, startTS=0, endTS=0):
 
 
 def generate_history(trafficLst, humanRead=False):
-  #TODO: DROP NEGATIVE VALUE EVENTS!
   '''
   @func: Creates iterable of history objects containing the difference in
     bytes and packets from the previous datum.
+  @return: List of dictionaries, history events.
+  @param:
+    trafficLst: Iterable of dictionaries, traffic logs.
+    humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: omit None?
   if trafficLst is None or len(trafficLst) < 2:
@@ -493,6 +496,10 @@ def load_history(filepath, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
+  @param:
+    filepath: Path to saved history file.
+    startTS: Integer/Float timestamp to start from.
+    endTS: Integer/Float timestamp to end at.
   '''
   #TODO: handle multiple files
   #TODO: overload load_netdev??
@@ -515,6 +522,11 @@ def load_history(filepath, startTS=0, endTS=0):
 def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   '''
   @func: Wrapper function for various output options.
+  @param:
+    outputMode: String, output method to call at switch.
+    historyLst: Iterable of dictionaries, history events.
+    filepath: Output filepath, used by 'save' mode.
+    humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: validation?
   # Filepath validation for 'save' mode happens during arg parsing
