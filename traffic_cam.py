@@ -306,7 +306,7 @@ def validate_filepath(filepath):
     with open(filepath, 'a'):  #TODO: chmod +rw
       pass
   except OSError as e:
-    raise OSError(e)  #TODO: remove '[Errno \d+]' - regex
+    raise e  #TODO: remove '[Errno \d+]' - regex
 
 
 def create_cronjob(configs):
