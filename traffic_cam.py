@@ -25,7 +25,10 @@ cronFilepath = '/etc/cron.d/traffic_cam_cron'
 
 
 def main():
-  args = getArgs()
+  '''
+  @func: Primary handler function for program.
+  '''
+  args = get_args()
   switch = {
       'config':   do_config,    # 
       'history':  do_history,   # 
@@ -38,12 +41,19 @@ def main():
     return 1
 
 
-def getArgs(argv=sys.argv):
-  #TODO: function string
+def get_args(argv=sys.argv):
   '''
+  @func: Parses arguments for program and provides help (-h) dialogue. Provides
+    three modes: config, history, and auto_log.
+    > Config mode should be run as root, and allows the user to set config
+    options and start or stop the auto logger cronjob.
+    > Auto_log mode is called by the cronjob to automatically parse and store
+    network traffic data. This mode is hidden from the user.
+    > History mode allows the user to examine the historical trends of network
+    traffic in several formats.
   '''
   parser = ArgumentParser(
-      description= "Log network traffic totals and display historical trends."
+      description="Log network traffic totals and display historical trends."
       )
   ### 'MODE' SUBPARSERS ###
   #TODO: how to add 'action' to subparser call (ie. set mode string)
@@ -58,6 +68,7 @@ def getArgs(argv=sys.argv):
       add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
 
   ### CONFIG MODE ARGS ###
+  #TODO: add status??
   #TODO: add auto history
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
