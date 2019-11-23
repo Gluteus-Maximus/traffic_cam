@@ -240,13 +240,23 @@ def validate_configs(configs):
 
 
 def validate_interfaces(interface):
-  #TODO: function string
+  '''
+  @func: Check that provided interface is in list of valid interfaces.
+  @param: interface: String, interface to check.
+  '''
+  if interface is None:
+    #TODO: specify exception
+    raise Exception("No interface provided.")
   if interface not in get_interfaces():
     #TODO: specify exception
     raise Exception("Interface does not exist: '{}'".format(interface))
 
 
 def get_interfaces():
+  '''
+  @func: Parse /proc/net/dev to make a list of valid interfaces.
+  @return: List of strings, valid interfaces.
+  '''
   #TODO: function string
   netdev = Path('/proc/net/dev')
   netdevRaw = netdev.read_text().split()
