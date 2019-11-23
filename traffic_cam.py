@@ -37,6 +37,7 @@ def main():
   try:
     return switch[args.mode](args)
   except Exception as e:
+    #raise e
     print(e, file=sys.stderr)
     return 1
 
@@ -196,8 +197,9 @@ def do_config(args):
   configs = None
   try:
     configs = load_config()
-  except Exception as e:
-    print(e, file=sys.stderr)  # warn user and continue
+  except Exception as e:  # warn user and continue
+    print("CONFIG LOAD ERROR: {}".format(e), file=sys.stderr)
+
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
     configs = configDefaults
@@ -207,25 +209,29 @@ def do_config(args):
         configs[key] = value
   configs['interface'] = args.interface if args.interface else configs['interface']
   configs['frequency'] = args.frequency if args.frequency else configs['frequency']
-  configs['filepath'] = args.filepath if args.filepath else configs['filepath']  #TODO: rename - netdev
+  configs['filepath'] = args.filepath if args.filepath else configs['filepath']
+      #TODO: rename - netdev
   try:
     validate_configs(configs)
   except Exception as e:
-    raise Exception(e)
+    raise e
   with Path(configFile) as fp:  #TODO: os.path.dirname(os.path.realpath(__file__))
     try:
-      fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
-    except Exception as e:  #TODO: write access exception (x2)
-      raise Exception(e)
-  print(configs)  #TODO DBG
+      fp.write_text(json.dumps(configs))
+    except PermissionError as e:
+      raise e
+  #print(configs)  #TODO DBG
   try:
     if args.apply is True:
-      delete_cronjob()
       create_cronjob(configs)
+      print("CONFIG: Changes Applied, Auto Logger Started", file=sys.stderr)
     elif args.kill is True:
       delete_cronjob()
-  except Exception as e:  #TODO: specify exception (x2)
-    raise Exception(e)
+      print("CONFIG: Auto Logger Stopped", file=sys.stderr)
+  except PermissionError as e:
+    raise e
+  except FileNotFoundError as e:
+    print("CONFIG: Auto Logger Not Running", file=sys.stderr)
   return 0
 
 
@@ -274,7 +280,6 @@ def get_interfaces():
   '''
   netdev = Path('/proc/net/dev')
   netdevRaw = netdev.read_text().split()
-  #TODO: validate fields exist
   interfaces = list()
   idx = 20  # First interface idx (skip header strings)
   while idx < len(netdevRaw):
@@ -301,7 +306,7 @@ def validate_filepath(filepath):
     with open(filepath, 'a'):  #TODO: chmod +rw
       pass
   except OSError as e:
-    raise OSError(e)  #TODO: remove '[Errno \d+]' - regex
+    raise e  #TODO: remove '[Errno \d+]' - regex
 
 
 def create_cronjob(configs):
@@ -315,7 +320,14 @@ def create_cronjob(configs):
     configs: Dictionary of configs loaded from file.
   '''
   if not is_super_user():  #TODO: try/exc on file creation instead
-    raise Exception("ERROR: Must be root.")
+    raise PermissionError("ERROR: Must be root.")
+  try:
+    delete_cronjob()
+  except FileNotFoundError as e:
+    pass # File absent, ignore
+  except PermissionError as e:
+    raise e
+
   programPath = os.path.realpath(__file__)
   #TODO: add error output 2>> {dir(programPath)/error.log}
   # 0=dir 1=freq 2=interface 3=output filepath
@@ -346,27 +358,27 @@ SHELL=/bin/sh
   try:
     with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
       fp.write(cronStr)
-  except Exception as e:  #TODO: specify
+  except FileNotFoundError as e:
     print('DBG')
-    raise Exception("ERROR: {}".format(e))
+    raise e #Exception("ERROR: {}".format(e))
 
 
 def delete_cronjob():
   '''
   @func: Delete the cron file in '/etc/cron.d', stop auto logger.
   '''
-  #TODO: dynamic program name (sys.argv[0])
   if not is_super_user():  #TODO: try/exc on file creation instead
-    raise Exception("ERROR: Must be root.")
+    raise PermissionError("ERROR: Must be root.")
   try:
     os.remove(cronFilepath)
-  except Exception as e:  #TODO: specify
-    pass
-    #TODO: ignore '[Errno 2]', raise others
-    #raise Exception("ERROR: {}".format(e))
+  except PermissionError as e:
+    raise e #PermissionError(e.args[1]) from e
+  except FileNotFoundError as e:
+    raise e
+    #pass  # File absent, ignore
 
 
-def is_super_user():
+def is_super_user():  #TODO: remove?
   '''
   @func: Check if current user has root privileges.
   '''
