@@ -112,7 +112,7 @@ def getArgs(argv=sys.argv):
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
       help="###Not yet implemented")  # Raw Data Format
-  display.add_argument('-a', '--average', dest='outputMode',
+  display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
       action='store_const', const='average',
       help="###Not yet implemented")  # Raw Data Format
   display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
@@ -332,9 +332,14 @@ def do_history(args):
   #TODO: function string
   '''
   '''
-  # format timeslice
+  # populate null timeslice
   if args.timeslice is None:
     args.timeslice = (0, 0)
+
+  # offset timeslice for negative values
+  for idx, val in enumerate(args.timeslice):
+    if val < 0:
+      args.timeslice[idx] = time.time() - (-val * 60)
 
   # create historyLst
   if args.load:
