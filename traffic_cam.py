@@ -260,7 +260,7 @@ def validate_configs(configs):
   except Exception as e:
     errors.append(e)
   try:
-    validate_filepath(configs['filepath'])  #TODO: rename - netdev
+    validate_filepath(configs['filepath'])  #TODO: rename - netdev, logfile
   except Exception as e:
     errors.append(e)
   if errors:
@@ -275,10 +275,8 @@ def validate_interfaces(interface):
     interface: String, interface to check.
   '''
   if interface is None:
-    #TODO: specify exception
     raise Exception("No interface provided.")
   if interface not in get_interfaces():
-    #TODO: specify exception
     raise Exception("Interface does not exist: '{}'".format(interface))
 
 
@@ -312,15 +310,15 @@ def validate_filepath(filepath):
   '''
   try:
     # Filepath is relative to current working directory
-    with open(filepath, 'a'):  #TODO: chmod +rw
+    with open(filepath, 'a'):  #TODO: chmod +rw ?
       pass
   except OSError as e:
-    raise e  #TODO: remove '[Errno \d+]' - regex
+    raise e
 
 
 def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
-  #TODO: add to PATH if not there (no abs/rel pathing)
+  #TODO: add to PATH if not there (no abs/rel pathing)?
   #TODO: expand filepath to absolute
   #TODO: build separate module and API for this for future use
   '''
@@ -355,8 +353,8 @@ def create_cronjob(configs):
           0, #configs['startTS'],
           0  #configs['endTS']
           )
-  # 0=dir 1=netdev_cron 2=history_cron
   historyCronStr = ""  #TODO DBG
+  # 0=dir 1=netdev_cron 2=history_cron
   cronStr = ''' \
 # /etc/cron.d/traffic_cam_cron: cron.d entries for the traffic_cam package
 SHELL=/bin/sh
@@ -365,7 +363,7 @@ SHELL=/bin/sh
 {1}
 '''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
+    with Path(cronFilepath).open('x') as fp:
       fp.write(cronStr)
   except FileNotFoundError as e:
     print('DBG')
