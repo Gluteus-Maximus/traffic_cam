@@ -209,17 +209,18 @@ def do_config(args):
         configs[key] = value
   configs['interface'] = args.interface if args.interface else configs['interface']
   configs['frequency'] = args.frequency if args.frequency else configs['frequency']
-  configs['filepath'] = args.filepath if args.filepath else configs['filepath']  #TODO: rename - netdev
+  configs['filepath'] = args.filepath if args.filepath else configs['filepath']
+      #TODO: rename - netdev
   try:
     validate_configs(configs)
   except Exception as e:
-    raise Exception(e)
+    raise e
   with Path(configFile) as fp:  #TODO: os.path.dirname(os.path.realpath(__file__))
     try:
-      fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
-    except Exception as e:  #TODO: write access exception (x2)
-      raise Exception(e)
-  print(configs)  #TODO DBG
+      fp.write_text(json.dumps(configs))
+    except PermissionError as e:
+      raise e
+  #print(configs)  #TODO DBG
   try:
     if args.apply is True:
       delete_cronjob()
