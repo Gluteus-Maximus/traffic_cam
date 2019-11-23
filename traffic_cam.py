@@ -362,8 +362,10 @@ def generate_splunk_panel():
 #TODO: static headers (move with scroll)
 #TODO: add auto history function for auto_log to use in splunk panel mode
 def do_history(args):
-  #TODO: function string
   '''
+  @func: History Mode - Allows the user to examine the historical trends of network
+    traffic in several formats.
+  @param: args: Namespace of argument parser.
   '''
   # populate null timeslice
   if args.timeslice is None:
@@ -569,7 +571,7 @@ def display_average(historyLst, _, humanRead):
   # Print time range
   minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
   maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
-  print("Average Utilization: '{}' to '{}'\n".format(
+  print("Average Traffic: '{}' to '{}'\n".format(
       time.ctime(minTS),
       time.ctime(maxTS)))
   # Calc and print averages
