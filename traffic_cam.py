@@ -416,10 +416,13 @@ def do_history(args):
 
 def load_netdev(files, startTS=0, endTS=0):
   #TODO: cleanup!
-  #TODO: handle negative timeslice
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
+  @param:
+    files: Iterable of filepaths to load log data from.
+    startTS: Integer/Float timestamp to start from.
+    endTS: Integer/Float timestamp to end at.
   '''
   trafficLst = list()
   for filepath in files:
