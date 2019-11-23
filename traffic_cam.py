@@ -151,8 +151,9 @@ def get_args(argv=sys.argv):
 def load_config(filepath=configFile):
   '''
   @func: Loads and returns config settings.
-  @param: filepath: Relative path to program config file.
   @return: Dictionary of settings.
+  @param:
+    filepath: Relative path to program config file.
   '''
   try:
     #TODO: fix relative path
@@ -179,7 +180,8 @@ def do_config(args):
   '''
   @func: Config Mode - modify and apply configuration changes, manage automatic
     data logging cronjob.
-  @param: args: Namespace of argument parser.
+  @param:
+    args: Namespace of argument parser.
   '''
   configs = None
   try:
@@ -220,7 +222,11 @@ def do_config(args):
 
 
 def validate_configs(configs):
-  #TODO: function string
+  '''
+  @func: Check that working config values are valid.
+  @param:
+    configs: Dictionary of configs loaded from file.
+  '''
   errors = list()
   try:
     validate_interfaces(configs['interface'])
@@ -242,7 +248,8 @@ def validate_configs(configs):
 def validate_interfaces(interface):
   '''
   @func: Check that provided interface is in list of valid interfaces.
-  @param: interface: String, interface to check.
+  @param:
+    interface: String, interface to check.
   '''
   if interface is None:
     #TODO: specify exception
