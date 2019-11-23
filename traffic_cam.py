@@ -382,7 +382,8 @@ def do_history(args):
   '''
   @func: History Mode - Allows the user to examine the historical trends of network
     traffic in several formats.
-  @param: args: Namespace of argument parser.
+  @param:
+    args: Namespace of argument parser.
   '''
   # populate null timeslice
   if args.timeslice is None:
