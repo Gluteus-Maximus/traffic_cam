@@ -58,38 +58,44 @@ def get_args(argv=sys.argv):
   ### 'MODE' SUBPARSERS ###
   #TODO: how to add 'action' to subparser call (ie. set mode string)
   mode = parser.add_subparsers(dest='mode', metavar='MODE',
-      help="###SUBPARSER HELP### default history", )  #TODO
+      help="Program mode, default is history.", )
+  # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="###Program Configuration Help###")  # Config Mode #TODO
+      help="Configuration mode. \"./traffic_cam config -h\" for more.",
+      description="--run as root-- Configuration mode. Change " +
+        "program configurations and start/stop automatic logging.")
+  # History Mode
   history = mode.add_parser('history',
-      help="###History Display Help###")  # History Mode (default) #TODO
-  # auto_log mode hidden from help dialogue, user shouldn't interact with this
-  auto_log = mode.add_parser('auto_log',
-      add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
+      help="History display mode. \"./traffic_cam history -h\" for more.",
+      description="History display mode. Load stored logs and display or " +
+        "save histogram.")
+  # Auto Log Mode
+  # hidden from help dialogue, user shouldn't interact with this
+  auto_log = mode.add_parser('auto_log', add_help=False)
 
   ### CONFIG MODE ARGS ###
-  #TODO: add status??
-  #TODO: add auto history
-  #TODO: help *4
+  #TODO: add status check??
+  #TODO: add auto history for splunk
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--interface', dest='interface', type=str,
-      help="###Not yet implemented")  # Interface to log
-  #TODO: validate interface exists
+  config.add_argument('-i', '--interface', dest='interface',
+      type=str, metavar='IF',
+      help="Name of interface to log (eth0, etc.)")  # Interface to log
   #TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
-  config.add_argument('-f', '--frequency', dest='frequency', type=int,
-      help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
-                                                            #TODO: type??
-  config.add_argument('-p', '--filepath', dest='filepath', type=str,
-      help="###Not yet implemented")  # Path to netdev logfile
+  config.add_argument('-f', '--frequency', dest='frequency',
+      type=int, metavar='FREQ',
+      help="Interval to log in minutes. #REMOVE#")  # Frequency of logging
+  config.add_argument('-p', '--filepath', dest='filepath',
+      type=str, metavar='PATH',
+      help="Filepath to logfile for traffic data.")  # Path to netdev logfile
 
-  #TODO: need default config settings
   # START/STOP CRON JOB
   cron = config.add_mutually_exclusive_group()
+  # Apply Configs and Create Cronjob
   cron.add_argument('-a', '--apply', action='store_true',
-      help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
-  #help: changes are only applied when --apply/-a is used to restart cron job
+      help="Apply config (with changes) and start cronjob.")
+  # Delete Cronjob
   cron.add_argument('-k', '--kill', action='store_true',
-      help="###Not yet implemented -- need sudo/root??")  # Delete cron job (if exists)
+      help="Stop cronjob if running.")
 
   # CREATE SPLUNK PANEL
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
@@ -97,14 +103,19 @@ def get_args(argv=sys.argv):
 
   ### HISTORY MODE ARGS ###
   source = history.add_mutually_exclusive_group(required=False)
-  source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'),
-      help="###Not yet implemented")  # Load Saved History from File
+  # Load Saved History
+  source.add_argument('--load', nargs=1, type=str, metavar=('PATH'),
+      help="Load saved history data from file.")
   #TODO: validate filepath
-  source.add_argument('--logfiles', nargs='+', type=str,
-      help="###Not yet implemented")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
+  # Input Logfile(s)
+  source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
+      help="Specify input netdev logfile(s).")
+  # Timeslice
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z, -Y/-Z for Y/Z minutes ago.")
-  #TODO: validate timestamp format/0 && START<=END
+      help="Timestamp window to process. Positive values are used for epoch " +
+        "timestamps. Zero (0) is unbounded, or all data. Negative values "
+        "are used for relative offset in minutes (e.g. \"--time -10 -5\" "
+        "shows records from 10 minutes ago until 5 minutes ago.")
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
   #TODO: timestamp format string?
@@ -113,30 +124,31 @@ def get_args(argv=sys.argv):
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
   display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
-      help="###Not yet implemented")  # Graph Format
+      help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
   display.add_argument('-l', '--list', dest='outputMode',
       action='store_const', const='list',
-      help="###Not yet implemented")  # List Format #TODO: remove??
+      help="Display as a list.#NOT IMPLEMENTED#")  # List Format
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
-      help="###Not yet implemented")  # List Format
+      help="Display as a formatted table.")  # Table Format
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
-      help="###Not yet implemented")  # Raw Data Format
+      help="Display raw history data.")  # Raw Data Format
   display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
       action='store_const', const='average',
-      help="###Not yet implemented")  # Raw Data Format
-  display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
-      help="###Not yet implemented")
+      help="Display average values (per second).")  # Raw Data Format
+  display.add_argument('-s', '--save', nargs=1, metavar=('PATH'),
+      help="Save raw history data to file.")
+      #TODO: multiple actions, store const x2
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
   history.add_argument('--hr', '--human', dest='human', action='store_true',
-      help="###Not yet implemented")  # Human Readable Units
+      help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
 
   ### AUTO LOG MODE ARGS ###
-  #TODO: add splunk panel mode
+  #TODO: add splunk panel/history mode
   # All args are required
   auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
   auto_log.add_argument('-p', '--filepath', type=str, required=True)  # Path to netdev logfile
