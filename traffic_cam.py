@@ -599,6 +599,7 @@ def save_history(historyLst, filepath, _):
 
 def display_average(historyLst, _, humanRead):
   '''
+  @func: CLI display average traffic values per second.
   '''
   #TODO: try/exc
   # Print time range
