@@ -37,6 +37,7 @@ def main():
   try:
     return switch[args.mode](args)
   except Exception as e:
+    #raise e
     print(e, file=sys.stderr)
     return 1
 
@@ -196,8 +197,9 @@ def do_config(args):
   configs = None
   try:
     configs = load_config()
-  except Exception as e:
-    print(e, file=sys.stderr)  # warn user and continue
+  except Exception as e:  # warn user and continue
+    print("CONFIG LOAD ERROR: {}".format(e), file=sys.stderr)
+
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
     configs = configDefaults
