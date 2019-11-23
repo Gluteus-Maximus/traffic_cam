@@ -16,7 +16,7 @@ from default_subparser import set_default_subparser
 ### CONFIG DEFAULT VALUES ###
 configFile = '.traffic_cam.conf'
 configDefaults = {
-    'interface': 'eth0',
+    'interface': None,
     'frequency': 1,
     'filepath':  'netdev.log'
     }
@@ -598,6 +598,10 @@ Transmit Packets
 
 ### AUTO LOG MODE ###
 def do_auto_log(args):
+  '''
+  @func: Auto_Log Mode - Parse /proc/net/dev and store data in logfile.
+  @param: args: Namespace of argument parser.
+  '''
   #TODO: send errors to error log
   #TODO: try
   traffic = parse_netdev(args.interface)
