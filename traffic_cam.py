@@ -58,18 +58,24 @@ def get_args(argv=sys.argv):
   ### 'MODE' SUBPARSERS ###
   #TODO: how to add 'action' to subparser call (ie. set mode string)
   mode = parser.add_subparsers(dest='mode', metavar='MODE',
-      help="###SUBPARSER HELP### default history", )  #TODO
+      help="Program mode, default is history.", )
+  # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="###Program Configuration Help###")  # Config Mode #TODO
+      help="Configuration mode. \"./traffic_cam config -h\" for more.",
+      description="--run as root-- Configuration mode. Change " +
+        "program configurations and start/stop automatic logging.")
+  # History Mode
   history = mode.add_parser('history',
-      help="###History Display Help###")  # History Mode (default) #TODO
-  # auto_log mode hidden from help dialogue, user shouldn't interact with this
-  auto_log = mode.add_parser('auto_log',
-      add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
+      help="History display mode. \"./traffic_cam history -h\" for more.",
+      description="History display mode. Load stored logs and display or " +
+        "save histogram.")
+  # Auto Log Mode
+  # hidden from help dialogue, user shouldn't interact with this
+  auto_log = mode.add_parser('auto_log', add_help=False)
 
   ### CONFIG MODE ARGS ###
-  #TODO: add status??
-  #TODO: add auto history
+  #TODO: add status check??
+  #TODO: add auto history for splunk
   #TODO: help *4
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
   config.add_argument('-i', '--interface', dest='interface', type=str,
