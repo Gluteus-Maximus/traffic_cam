@@ -37,8 +37,8 @@ def main():
   try:
     return switch[args.mode](args)
   except Exception as e:
-    #raise e
     print(e, file=sys.stderr)
+    raise e
     return 1
 
 
@@ -345,7 +345,8 @@ def create_cronjob(configs):
           configs['interface'],
           os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
   # 0=dir 1=freq 2=output filepath
-  historyCronStr = \ #if history (arg):
+  #if history (arg):
+  historyCronStr = \
       "*/{1} * * * * root {0} history -s {2} --time {3} {4}".format(
           programPath,
           configs['frequency'],
@@ -402,7 +403,8 @@ def generate_splunk_panel():
 
 ### HISTORY MODE ###
 #TODO: static headers (move with scroll)
-#TODO: add auto history function for auto_log to use in splunk panel mode
+#TODO: add auto history function for auto_log to use in splunk panel mode (append)
+  # start >= maxStart, end unbounded
 def do_history(args):
   '''
   @func: History Mode - Allows the user to examine the historical trends of network
@@ -453,19 +455,22 @@ def load_netdev(files, startTS=0, endTS=0):
   for filepath in files:
     try:
       with Path(filepath) as fp:
-        for line in [x for x in fp.read_text().split("\n") if x]:
+        for idx, line in enumerate([x for x in fp.read_text().split("\n") if x]):
           try:
             traffic = json.loads(line)
             if (startTS == 0 or traffic['ts'] >= startTS) \
                 and (endTS == 0 or traffic['ts'] <= endTS):
               #TODO: validate all fields
               trafficLst.append(traffic)
-          except (KeyError, json.decoder.JSONDecodeError) as e:
+          except (TypeError, KeyError, json.decoder.JSONDecodeError) as e:
             # skip bad entries
-            #print("ERROR: skipping bad line {}".format(e), file=sys.stderr)
+            print("ERROR: skipping line {}: \'{}\'".format(idx, line),
+                file=sys.stderr)
             continue
-    except Exception as e:  #TODO: target exceptions
-      print("ERROR: {}".format(e), file=sys.stderr)
+    except PermissionError as e:  #TODO: target exceptions
+      raise PermissionError("ERROR: {}".format(e)) from e
+    except FileNotFoundError as e:  #TODO: target exceptions
+      raise FileNotFoundError("ERROR: {}".format(e)) from e
   return trafficLst if trafficLst else None
 
 
