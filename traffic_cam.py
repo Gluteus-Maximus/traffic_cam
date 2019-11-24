@@ -728,8 +728,7 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
       fp.write(json.dumps(traffic) + "\n")
     return 0
   except Exception as e:  #TODO: specify
-    print("SAVE ERROR: {}".format(e))
-    return 1
+    raise Exception("SAVE ERROR: {}".format(e))
 
 
 if __name__ == '__main__':
