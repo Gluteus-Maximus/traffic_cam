@@ -338,7 +338,6 @@ def create_cronjob(configs):
 
   programPath = os.path.realpath(__file__)
   errorOutput = "2>> {}".format(errorFilepath)
-  #TODO: add error output 2>> {dir(programPath)/error.log}
   #TODO: add 'date' timestamp
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
