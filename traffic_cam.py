@@ -522,7 +522,7 @@ def generate_history(trafficLst, humanRead=False):
         historyObj['tx_b'] -= prevObj['tx_b']  # Diff Transmit Bytes
         historyObj['tx_p'] -= prevObj['tx_p']  # Diff Transmit Packets
       historyLst.append(historyObj)
-    except KeyError:
+    except KeyError:  # trafficLst should be cleaned prior, should not trigger
       print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
       continue
     prevObj = traffic
@@ -572,8 +572,6 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
-  #TODO: validation?
-  # Filepath validation for 'save' mode happens during arg parsing
   #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
   switch = {
       'graph'  : display_graph,
@@ -594,7 +592,6 @@ def display_graph(historyLst, _, humanRead):
   '''
   print("display_graph")  #TODO DBG
   return 0
-  pass
 
 
 def display_table(historyLst, _, humanRead):
@@ -635,43 +632,48 @@ def save_history(historyLst, filepath, _):
     Always stores raw values (byte count and epoch timestamps).
   '''
   #TODO: specify target file owner?
-  #TODO: try/exc file
-  for item in historyLst:
-    store_netdev(item, filepath)
-  return 0
+  try:
+    for item in historyLst:
+      store_netdev(item, filepath)
+    return 0
+  except Exception as e:
+    raise e
 
 
 def display_average(historyLst, _, humanRead):
   '''
   @func: CLI display average traffic values per second.
   '''
-  #TODO: try/exc
-  # Print time range
-  minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
-  maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
-  print("Average Traffic: '{}' to '{}'\n".format(
-      time.ctime(minTS),
-      time.ctime(maxTS)))
-  # Calc and print averages
-  rx_b = [x['rx_b'] for x in historyLst]
-  rx_b = sum(rx_b) / (maxTS - minTS)
-  rx_p = [x['rx_p'] for x in historyLst]
-  rx_p = sum(rx_p) / (maxTS - minTS)
-  tx_b = [x['tx_b'] for x in historyLst]
-  tx_b = sum(tx_b) / (maxTS - minTS)
-  tx_p = [x['tx_p'] for x in historyLst]
-  tx_p = sum(tx_p) / (maxTS - minTS)
-  averageStr = '''\
-Receive Data
- {0:0.0f} {1}/s
-Receive Packets
- {2:0.2f} pkt/s
-Transmit Data
- {3:0.0f} {4}/s
-Transmit Packets
- {5:0.2f} pkt/s'''
-  print(averageStr.format(*(rx_b, "B"), rx_p, *(tx_b, "B"), tx_p))  #TODO: B/MB/GB
-  return 0
+  try:
+    # Print time range
+    minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
+    maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
+    print("Average Traffic: '{}' to '{}'\n".format(
+        time.ctime(minTS),
+        time.ctime(maxTS)))
+    # Calc and print averages
+    rx_b = [x['rx_b'] for x in historyLst]
+    rx_b = sum(rx_b) / (maxTS - minTS)
+    rx_p = [x['rx_p'] for x in historyLst]
+    rx_p = sum(rx_p) / (maxTS - minTS)
+    tx_b = [x['tx_b'] for x in historyLst]
+    tx_b = sum(tx_b) / (maxTS - minTS)
+    tx_p = [x['tx_p'] for x in historyLst]
+    tx_p = sum(tx_p) / (maxTS - minTS)
+    averageStr = '''\
+  Receive Data
+  {0:0.0f} {1}/s
+  Receive Packets
+  {2:0.2f} pkt/s
+  Transmit Data
+  {3:0.0f} {4}/s
+  Transmit Packets
+  {5:0.2f} pkt/s'''
+    #TODO: human readable
+    print(averageStr.format(*(rx_b, "B"), rx_p, *(tx_b, "B"), tx_p))
+    return 0
+  except Exception as e:  #TODO: specify exception
+    raise e
 
 
 ### AUTO LOG MODE ###
