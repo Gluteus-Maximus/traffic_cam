@@ -440,6 +440,9 @@ def do_history(args):
           args.timeslice[0], args.timeslice[1])
     historyLst = generate_history(trafficLst, args.human)
 
+  if historyLst is None:
+    return 0
+
   return output_history(args.outputMode, historyLst, args.save, args.human)
 
 
@@ -554,7 +557,7 @@ def load_history(files, startTS=0, endTS=0):
           except (AttributeError, TypeError, KeyError,
               json.decoder.JSONDecodeError):
             continue  # skip bad entries
-    except Exception as e:  #TODO: target exceptions
+    except (PermissionError, FileNotFoundError) as e:
       print("LOAD ERROR: skipping bad file: {}".format(e.filename),
           file=sys.stderr)
       continue
@@ -570,8 +573,6 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
-  if historyLst is None:
-    return None
   #TODO: validation?
   # Filepath validation for 'save' mode happens during arg parsing
   #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
