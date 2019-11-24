@@ -440,8 +440,8 @@ def do_history(args):
           args.timeslice[0], args.timeslice[1])
     historyLst = generate_history(trafficLst, args.human)
 
-  if historyLst is None:
-    return 0
+  if not historyLst:
+    raise Exception("ERROR: Not enough data to generate history")
 
   return output_history(args.outputMode, historyLst, args.save, args.human)
 
@@ -492,10 +492,8 @@ def generate_history(trafficLst, humanRead=False):
     humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: omit None?
-  if trafficLst is None or len(trafficLst) < 2:
-    print("ERROR: Not enough data to generate history", file=sys.stderr)
-    #TODO: raise error
-    return None
+  if not trafficLst or len(trafficLst) < 2:
+    raise Exception("ERROR: Not enough data to generate history")
 
   # Sort trafficLst by timestamp, drop bad entries
   netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])  #TODO: link to parse_netdev
