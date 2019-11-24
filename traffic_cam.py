@@ -454,24 +454,27 @@ def load_netdev(files, startTS=0, endTS=0):
     endTS: Integer/Float timestamp to end at.
   '''
   trafficLst = list()
+  netdevKeys = set(['ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
   for filepath in files:
     try:
       with Path(filepath) as fp:
         for idx, line in enumerate([x for x in fp.read_text().split("\n") if x]):
           try:
             traffic = json.loads(line)
+            # validate keys
+            if set(traffic.keys()) != netdevKeys:
+              continue  # skip bad entries
             if (startTS == 0 or traffic['ts'] >= startTS) \
                 and (endTS == 0 or traffic['ts'] <= endTS):
-              #TODO: validate all fields
               trafficLst.append(traffic)
-          except (TypeError, KeyError, json.decoder.JSONDecodeError) as e:
-            # skip bad entries
+          except (AttributeError, TypeError, KeyError,
+              json.decoder.JSONDecodeError) as e:
             print("ERROR: skipping line {}: \'{}\'".format(idx, line),
                 file=sys.stderr)
-            continue
-    except PermissionError as e:  #TODO: target exceptions
+            continue  # warn and skip bad entries
+    except PermissionError as e:
       raise PermissionError("ERROR: {}".format(e)) from e
-    except FileNotFoundError as e:  #TODO: target exceptions
+    except FileNotFoundError as e:
       raise FileNotFoundError("ERROR: {}".format(e)) from e
   return trafficLst if trafficLst else None
 
@@ -529,35 +532,33 @@ def load_history(files, startTS=0, endTS=0):
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
   @param:
-    filepath: Path to saved history file.
+    files: Iterable of filepaths to load saved history files.
     startTS: Integer/Float timestamp to start from.
     endTS: Integer/Float timestamp to end at.
   '''
   #TODO: overload load_netdev??
   historyLst = list()
   historyKeys = set(['startTS', 'endTS', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
-  try:
-    for filepath in files:
-      try:
-        with Path(filepath) as fp:
-          for line in [x for x in fp.read_text().split("\n") if x]:
-            try:
-              traffic = json.loads(line)
-              if set(traffic.keys()) != historyKeys:
-                continue  # skip bad entries
-              if (startTS == 0 or traffic['startTS'] >= startTS) \
-                  and (endTS == 0 or traffic['endTS'] <= endTS):
-                historyLst.append(traffic)
-            except (AttributeError, TypeError, KeyError,
-                json.decoder.JSONDecodeError):
+  for filepath in files:
+    try:
+      with Path(filepath) as fp:
+        for line in [x for x in fp.read_text().split("\n") if x]:
+          try:
+            traffic = json.loads(line)
+            # validate keys
+            if set(traffic.keys()) != historyKeys:
               continue  # skip bad entries
-      except Exception as e:
-        print("LOAD ERROR: skipping bad file: {}".format(e.filename),
-            file=sys.stderr)
-        continue
-    return sorted(historyLst, key=lambda x: x['startTS'])
-  except Exception as e:  #TODO: target exceptions
-    raise e
+            if (startTS == 0 or traffic['startTS'] >= startTS) \
+                and (endTS == 0 or traffic['endTS'] <= endTS):
+              historyLst.append(traffic)
+          except (AttributeError, TypeError, KeyError,
+              json.decoder.JSONDecodeError):
+            continue  # skip bad entries
+    except Exception as e:  #TODO: target exceptions
+      print("LOAD ERROR: skipping bad file: {}".format(e.filename),
+          file=sys.stderr)
+      continue
+  return sorted(historyLst, key=lambda x: x['startTS'])
 
 
 def output_history(outputMode, historyLst, filepath=None, humanRead=False):
