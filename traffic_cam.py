@@ -429,7 +429,7 @@ def do_history(args):
   # create historyLst
   if args.load:
     historyLst = load_history(args.load,
-        args.timeslice[0], args.timeslice[1], args.human)
+        args.timeslice[0], args.timeslice[1])
   else:
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
@@ -527,7 +527,7 @@ def generate_history(trafficLst, humanRead=False):
   return historyLst
 
 
-def load_history(filepath, startTS=0, endTS=0):
+def load_history(filepaths, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
@@ -539,19 +539,22 @@ def load_history(filepath, startTS=0, endTS=0):
   #TODO: handle multiple files
   #TODO: overload load_netdev??
   try:
-    with Path(filepath) as fp:
-      historyLst = list()
-      for line in [x for x in fp.read_text().split("\n") if x]:
-        traffic = json.loads(line)
-        #TODO: json.decoder.JSONDecodeError
-        if (startTS == 0 or traffic['startTS'] >= startTS) \
-            and (endTS == 0 or traffic['endTS'] <= endTS):
-          historyLst.append(traffic)
-        #TODO: skip bad entries (key/value checks) - try/except
-      return historyLst
+    for filepath in filepaths:
+      with Path(filepath) as fp:
+        historyLst = list()
+        for line in [x for x in fp.read_text().split("\n") if x]:
+          try:
+            traffic = json.loads(line)
+          except json.decoder.JSONDecodeError as e:
+            pass
+          #TODO: json.decoder.JSONDecodeError
+          if (startTS == 0 or traffic['startTS'] >= startTS) \
+              and (endTS == 0 or traffic['endTS'] <= endTS):
+            historyLst.append(traffic)
+          #TODO: skip bad entries (key/value checks) - try/except
+      return sorted(historyLst, key=lambda x: x['startTS'])
   except Exception as e:  #TODO: target exceptions
-    print("ERROR: {}".format(e), file=sys.stderr)
-    return None
+    raise e
 
 
 def output_history(outputMode, historyLst, filepath=None, humanRead=False):
