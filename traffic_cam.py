@@ -681,11 +681,12 @@ def do_auto_log(args):
   @func: Auto_Log Mode - Parse /proc/net/dev and store data in logfile.
   @param: args: Namespace of argument parser.
   '''
-  #TODO: output errors, cronjob append to error log
-  #TODO: try
-  traffic = parse_netdev(args.interface)
-  store_netdev(traffic, args.filepath)
-  return 0
+  try:
+    traffic = parse_netdev(args.interface)
+    store_netdev(traffic, args.filepath)
+    return 0
+  except Exception as e:
+    raise e
 
 
 def parse_netdev(interface):
