@@ -391,14 +391,14 @@ def delete_cronjob():
   except FileNotFoundError as e:
     raise e
 
-
+"""
 def is_super_user():  #TODO: remove?
   '''
   @func: Check if current user has root privileges.
   '''
   #TODO
   return True
-
+"""
 
 def generate_splunk_panel():
   '''
@@ -410,7 +410,7 @@ def generate_splunk_panel():
 ### HISTORY MODE ###
 #TODO: static headers (move with scroll)
 #TODO: add auto history function for auto_log to use in splunk panel mode (append)
-  # start >= maxStart, end unbounded
+    # start >= maxStart, end unbounded
 def do_history(args):
   '''
   @func: History Mode - Allows the user to examine the historical trends of network
@@ -449,7 +449,6 @@ def do_history(args):
 
 
 def load_netdev(files, startTS=0, endTS=0):
-  #TODO: cleanup!
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
