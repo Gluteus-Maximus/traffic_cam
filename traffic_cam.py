@@ -336,23 +336,28 @@ def create_cronjob(configs):
     raise e
 
   programPath = os.path.realpath(__file__)
+  errorOutput = "2>> {}".format(errorFilepath)
   #TODO: add error output 2>> {dir(programPath)/error.log}
+  #TODO: add 'date' timestamp
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
-      "*/{1} * * * * root {0} auto_log -i {2} -p {3}".format(
+      "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
           programPath,
           configs['frequency'],
           configs['interface'],
-          os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
+          os.path.realpath(configs['filepath']),
+          errorOutput  #TODO: rename - netdev
+          )
   # 0=dir 1=freq 2=output filepath
   #if history (arg):
   historyCronStr = \
-      "*/{1} * * * * root {0} history -s {2} --time {3} {4}".format(
+      "*/{1} * * * * root {0} history -s {2} --time {3} {4} {5}".format(
           programPath,
           configs['frequency'],
           0, #os.path.realpath(configs['save']),  #TODO
           0, #configs['startTS'],
-          0  #configs['endTS']
+          0,  #configs['endTS']
+          errorOutput
           )
   historyCronStr = ""  #TODO DBG
   # 0=dir 1=netdev_cron 2=history_cron
