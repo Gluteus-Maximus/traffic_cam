@@ -434,6 +434,7 @@ def do_history(args):
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
+      print(trafficLst)
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
@@ -457,7 +458,7 @@ def load_netdev(files, startTS=0, endTS=0):
     endTS: Integer/Float timestamp to end at.
   '''
   trafficLst = list()
-  netdevKeys = set(['ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
+  netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
   for filepath in files:
     try:
       with Path(filepath) as fp:
