@@ -37,8 +37,8 @@ def main():
   try:
     return switch[args.mode](args)
   except Exception as e:
-    #raise e
     print(e, file=sys.stderr)
+    raise e
     return 1
 
 
@@ -150,6 +150,7 @@ def get_args(argv=sys.argv):
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel/history mode
   # All args are required
+  #TODO: multiple interfaces
   auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
   auto_log.add_argument('-p', '--filepath', type=str, required=True)  # Path to netdev logfile
 
@@ -260,12 +261,12 @@ def validate_configs(configs):
   except Exception as e:
     errors.append(e)
   try:
-    validate_filepath(configs['filepath'])  #TODO: rename - netdev
+    validate_filepath(configs['filepath'])  #TODO: rename - netdev, logfile
   except Exception as e:
     errors.append(e)
   if errors:
     raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
-        "\n{}"*len(errors)).format(*errors))
+        "\n  {}"*len(errors)).format(*errors))
 
 
 def validate_interfaces(interface):
@@ -275,10 +276,8 @@ def validate_interfaces(interface):
     interface: String, interface to check.
   '''
   if interface is None:
-    #TODO: specify exception
     raise Exception("No interface provided.")
   if interface not in get_interfaces():
-    #TODO: specify exception
     raise Exception("Interface does not exist: '{}'".format(interface))
 
 
@@ -312,15 +311,15 @@ def validate_filepath(filepath):
   '''
   try:
     # Filepath is relative to current working directory
-    with open(filepath, 'a'):  #TODO: chmod +rw
+    with open(filepath, 'a'):  #TODO: chmod +rw ?
       pass
   except OSError as e:
-    raise e  #TODO: remove '[Errno \d+]' - regex
+    raise e
 
 
 def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
-  #TODO: add to PATH if not there (no abs/rel pathing)
+  #TODO: add to PATH if not there (no abs/rel pathing)?
   #TODO: expand filepath to absolute
   #TODO: build separate module and API for this for future use
   '''
@@ -328,8 +327,8 @@ def create_cronjob(configs):
   @param:
     configs: Dictionary of configs loaded from file.
   '''
-  if not is_super_user():  #TODO: try/exc on file creation instead
-    raise PermissionError("ERROR: Must be root.")
+  #if not is_super_user():  #TODO: try/exc on file creation instead
+  #  raise PermissionError("ERROR: Must be root.")
   try:
     delete_cronjob()
   except FileNotFoundError as e:
@@ -338,25 +337,31 @@ def create_cronjob(configs):
     raise e
 
   programPath = os.path.realpath(__file__)
+  errorOutput = "2>> {}".format(errorFilepath)
   #TODO: add error output 2>> {dir(programPath)/error.log}
+  #TODO: add 'date' timestamp
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
-      "*/{1} * * * * root {0} auto_log -i {2} -p {3}".format(
+      "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
           programPath,
           configs['frequency'],
           configs['interface'],
-          os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
+          os.path.realpath(configs['filepath']),
+          errorOutput  #TODO: rename - netdev
+          )
   # 0=dir 1=freq 2=output filepath
+  #if history (arg):
   historyCronStr = \
-      "*/{1} * * * * root {0} history -s {2} --time {3} {4}".format(
+      "*/{1} * * * * root {0} history -s {2} --time {3} {4} {5}".format(
           programPath,
           configs['frequency'],
           0, #os.path.realpath(configs['save']),  #TODO
           0, #configs['startTS'],
-          0  #configs['endTS']
+          0,  #configs['endTS']
+          errorOutput
           )
-  # 0=dir 1=netdev_cron 2=history_cron
   historyCronStr = ""  #TODO DBG
+  # 0=dir 1=netdev_cron 2=history_cron
   cronStr = ''' \
 # /etc/cron.d/traffic_cam_cron: cron.d entries for the traffic_cam package
 SHELL=/bin/sh
@@ -365,26 +370,26 @@ SHELL=/bin/sh
 {1}
 '''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
+    with Path(cronFilepath).open('x') as fp:
       fp.write(cronStr)
-  except FileNotFoundError as e:
+  #except FileNotFoundError as e:
+  except PermissionError as e:
     print('DBG')
-    raise e #Exception("ERROR: {}".format(e))
+    raise e
 
 
 def delete_cronjob():
   '''
   @func: Delete the cron file in '/etc/cron.d', stop auto logger.
   '''
-  if not is_super_user():  #TODO: try/exc on file creation instead
-    raise PermissionError("ERROR: Must be root.")
+  #if not is_super_user():  #TODO: try/exc on file creation instead
+  #  raise PermissionError("ERROR: Must be root.")
   try:
     os.remove(cronFilepath)
   except PermissionError as e:
-    raise e #PermissionError(e.args[1]) from e
+    raise e
   except FileNotFoundError as e:
     raise e
-    #pass  # File absent, ignore
 
 
 def is_super_user():  #TODO: remove?
@@ -404,7 +409,8 @@ def generate_splunk_panel():
 
 ### HISTORY MODE ###
 #TODO: static headers (move with scroll)
-#TODO: add auto history function for auto_log to use in splunk panel mode
+#TODO: add auto history function for auto_log to use in splunk panel mode (append)
+  # start >= maxStart, end unbounded
 def do_history(args):
   '''
   @func: History Mode - Allows the user to examine the historical trends of network
@@ -424,19 +430,20 @@ def do_history(args):
   # create historyLst
   if args.load:
     historyLst = load_history(args.load,
-        args.timeslice[0], args.timeslice[1], args.human)
+        args.timeslice[0], args.timeslice[1])
   else:
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
+      print(trafficLst)
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
           args.timeslice[0], args.timeslice[1])
     historyLst = generate_history(trafficLst, args.human)
 
-  if historyLst is None:
-    return 0
+  if not historyLst:
+    raise Exception("ERROR: Not enough data to generate history")
 
   return output_history(args.outputMode, historyLst, args.save, args.human)
 
@@ -452,22 +459,28 @@ def load_netdev(files, startTS=0, endTS=0):
     endTS: Integer/Float timestamp to end at.
   '''
   trafficLst = list()
+  netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
   for filepath in files:
     try:
       with Path(filepath) as fp:
-        for line in [x for x in fp.read_text().split("\n") if x]:
+        for idx, line in enumerate([x for x in fp.read_text().split("\n") if x]):
           try:
             traffic = json.loads(line)
+            # validate keys
+            if set(traffic.keys()) != netdevKeys:
+              continue  # skip bad entries
             if (startTS == 0 or traffic['ts'] >= startTS) \
                 and (endTS == 0 or traffic['ts'] <= endTS):
-              #TODO: validate all fields
               trafficLst.append(traffic)
-          except (KeyError, json.decoder.JSONDecodeError) as e:
-            # skip bad entries
-            #print("ERROR: skipping bad line {}".format(e), file=sys.stderr)
-            continue
-    except Exception as e:  #TODO: target exceptions
-      print("ERROR: {}".format(e), file=sys.stderr)
+          except (AttributeError, TypeError, KeyError,
+              json.decoder.JSONDecodeError) as e:
+            print("ERROR: skipping line {}: \'{}\'".format(idx, line),
+                file=sys.stderr)
+            continue  # warn and skip bad entries
+    except PermissionError as e:
+      raise PermissionError("ERROR: {}".format(e)) from e
+    except FileNotFoundError as e:
+      raise FileNotFoundError("ERROR: {}".format(e)) from e
   return trafficLst if trafficLst else None
 
 
@@ -481,10 +494,8 @@ def generate_history(trafficLst, humanRead=False):
     humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: omit None?
-  if trafficLst is None or len(trafficLst) < 2:
-    print("ERROR: Not enough data to generate history", file=sys.stderr)
-    #TODO: raise error
-    return None
+  if not trafficLst or len(trafficLst) < 2:
+    raise Exception("ERROR: Not enough data to generate history")
 
   # Sort trafficLst by timestamp, drop bad entries
   netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])  #TODO: link to parse_netdev
@@ -519,31 +530,38 @@ def generate_history(trafficLst, humanRead=False):
   return historyLst
 
 
-def load_history(filepath, startTS=0, endTS=0):
+def load_history(files, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
   @param:
-    filepath: Path to saved history file.
+    files: Iterable of filepaths to load saved history files.
     startTS: Integer/Float timestamp to start from.
     endTS: Integer/Float timestamp to end at.
   '''
-  #TODO: handle multiple files
   #TODO: overload load_netdev??
-  try:
-    with Path(filepath) as fp:
-      historyLst = list()
-      for line in [x for x in fp.read_text().split("\n") if x]:
-        traffic = json.loads(line)
-        #TODO: json.decoder.JSONDecodeError
-        if (startTS == 0 or traffic['startTS'] >= startTS) \
-            and (endTS == 0 or traffic['endTS'] <= endTS):
-          historyLst.append(traffic)
-        #TODO: skip bad entries (key/value checks) - try/except
-      return historyLst
-  except Exception as e:  #TODO: target exceptions
-    print("ERROR: {}".format(e), file=sys.stderr)
-    return None
+  historyLst = list()
+  historyKeys = set(['startTS', 'endTS', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
+  for filepath in files:
+    try:
+      with Path(filepath) as fp:
+        for line in [x for x in fp.read_text().split("\n") if x]:
+          try:
+            traffic = json.loads(line)
+            # validate keys
+            if set(traffic.keys()) != historyKeys:
+              continue  # skip bad entries
+            if (startTS == 0 or traffic['startTS'] >= startTS) \
+                and (endTS == 0 or traffic['endTS'] <= endTS):
+              historyLst.append(traffic)
+          except (AttributeError, TypeError, KeyError,
+              json.decoder.JSONDecodeError):
+            continue  # skip bad entries
+    except (PermissionError, FileNotFoundError) as e:
+      print("LOAD ERROR: skipping bad file: {}".format(e.filename),
+          file=sys.stderr)
+      continue
+  return sorted(historyLst, key=lambda x: x['startTS'])
 
 
 def output_history(outputMode, historyLst, filepath=None, humanRead=False):
