@@ -523,7 +523,7 @@ def generate_history(trafficLst, humanRead=False):
         historyObj['tx_b'] -= prevObj['tx_b']  # Diff Transmit Bytes
         historyObj['tx_p'] -= prevObj['tx_p']  # Diff Transmit Packets
       historyLst.append(historyObj)
-    except KeyError:
+    except KeyError:  # trafficLst should be cleaned prior, should not trigger
       print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
       continue
     prevObj = traffic
@@ -573,8 +573,6 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
-  #TODO: validation?
-  # Filepath validation for 'save' mode happens during arg parsing
   #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
   switch = {
       'graph'  : display_graph,
@@ -595,7 +593,6 @@ def display_graph(historyLst, _, humanRead):
   '''
   print("display_graph")  #TODO DBG
   return 0
-  pass
 
 
 def display_table(historyLst, _, humanRead):
