@@ -150,6 +150,7 @@ def get_args(argv=sys.argv):
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel/history mode
   # All args are required
+  #TODO: multiple interfaces
   auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
   auto_log.add_argument('-p', '--filepath', type=str, required=True)  # Path to netdev logfile
 
