@@ -535,6 +535,7 @@ def load_history(filepaths, startTS=0, endTS=0):
   '''
   #TODO: overload load_netdev??
   historyLst = list()
+  historyKeys = set(['startTS', 'endTS', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
   try:
     for filepath in filepaths:
       try:
@@ -542,6 +543,8 @@ def load_history(filepaths, startTS=0, endTS=0):
           for line in [x for x in fp.read_text().split("\n") if x]:
             try:
               traffic = json.loads(line)
+              if set(traffic.keys()) != historyKeys:
+                raise KeyError()
               if (startTS == 0 or traffic['startTS'] >= startTS) \
                   and (endTS == 0 or traffic['endTS'] <= endTS):
                 historyLst.append(traffic)
