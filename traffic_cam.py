@@ -265,7 +265,7 @@ def validate_configs(configs):
     errors.append(e)
   if errors:
     raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
-        "\n{}"*len(errors)).format(*errors))
+        "\n  {}"*len(errors)).format(*errors))
 
 
 def validate_interfaces(interface):
@@ -326,8 +326,8 @@ def create_cronjob(configs):
   @param:
     configs: Dictionary of configs loaded from file.
   '''
-  if not is_super_user():  #TODO: try/exc on file creation instead
-    raise PermissionError("ERROR: Must be root.")
+  #if not is_super_user():  #TODO: try/exc on file creation instead
+  #  raise PermissionError("ERROR: Must be root.")
   try:
     delete_cronjob()
   except FileNotFoundError as e:
@@ -381,8 +381,8 @@ def delete_cronjob():
   '''
   @func: Delete the cron file in '/etc/cron.d', stop auto logger.
   '''
-  if not is_super_user():  #TODO: try/exc on file creation instead
-    raise PermissionError("ERROR: Must be root.")
+  #if not is_super_user():  #TODO: try/exc on file creation instead
+  #  raise PermissionError("ERROR: Must be root.")
   try:
     os.remove(cronFilepath)
   except PermissionError as e:
