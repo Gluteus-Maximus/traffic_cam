@@ -524,7 +524,7 @@ def generate_history(trafficLst, humanRead=False):
   return historyLst
 
 
-def load_history(filepaths, startTS=0, endTS=0):
+def load_history(files, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
@@ -537,21 +537,23 @@ def load_history(filepaths, startTS=0, endTS=0):
   historyLst = list()
   historyKeys = set(['startTS', 'endTS', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
   try:
-    for filepath in filepaths:
+    for filepath in files:
       try:
         with Path(filepath) as fp:
           for line in [x for x in fp.read_text().split("\n") if x]:
             try:
               traffic = json.loads(line)
               if set(traffic.keys()) != historyKeys:
-                raise KeyError()
+                continue  # skip bad entries
               if (startTS == 0 or traffic['startTS'] >= startTS) \
                   and (endTS == 0 or traffic['endTS'] <= endTS):
                 historyLst.append(traffic)
-            except (TypeError, KeyError, json.decoder.JSONDecodeError) as e:
+            except (AttributeError, TypeError, KeyError,
+                json.decoder.JSONDecodeError):
               continue  # skip bad entries
       except Exception as e:
-        print("LOAD ERROR: skipping bad file", file=sys.stderr)
+        print("LOAD ERROR: skipping bad file: {}".format(e.filename),
+            file=sys.stderr)
         continue
     return sorted(historyLst, key=lambda x: x['startTS'])
   except Exception as e:  #TODO: target exceptions
