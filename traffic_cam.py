@@ -440,9 +440,6 @@ def do_history(args):
           args.timeslice[0], args.timeslice[1])
     historyLst = generate_history(trafficLst, args.human)
 
-  if historyLst is None:
-    return 0
-
   return output_history(args.outputMode, historyLst, args.save, args.human)
 
 
@@ -536,23 +533,24 @@ def load_history(filepaths, startTS=0, endTS=0):
     startTS: Integer/Float timestamp to start from.
     endTS: Integer/Float timestamp to end at.
   '''
-  #TODO: handle multiple files
   #TODO: overload load_netdev??
+  historyLst = list()
   try:
     for filepath in filepaths:
-      with Path(filepath) as fp:
-        historyLst = list()
-        for line in [x for x in fp.read_text().split("\n") if x]:
-          try:
-            traffic = json.loads(line)
-          except json.decoder.JSONDecodeError as e:
-            pass
-          #TODO: json.decoder.JSONDecodeError
-          if (startTS == 0 or traffic['startTS'] >= startTS) \
-              and (endTS == 0 or traffic['endTS'] <= endTS):
-            historyLst.append(traffic)
-          #TODO: skip bad entries (key/value checks) - try/except
-      return sorted(historyLst, key=lambda x: x['startTS'])
+      try:
+        with Path(filepath) as fp:
+          for line in [x for x in fp.read_text().split("\n") if x]:
+            try:
+              traffic = json.loads(line)
+              if (startTS == 0 or traffic['startTS'] >= startTS) \
+                  and (endTS == 0 or traffic['endTS'] <= endTS):
+                historyLst.append(traffic)
+            except (TypeError, KeyError, json.decoder.JSONDecodeError) as e:
+              continue  # skip bad entries
+      except Exception as e:
+        print("LOAD ERROR: skipping bad file", file=sys.stderr)
+        continue
+    return sorted(historyLst, key=lambda x: x['startTS'])
   except Exception as e:  #TODO: target exceptions
     raise e
 
@@ -566,6 +564,8 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
+  if historyLst is None:
+    return None
   #TODO: validation?
   # Filepath validation for 'save' mode happens during arg parsing
   #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
