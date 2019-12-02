@@ -38,6 +38,7 @@ def main():
     return switch[args.mode](args)
   except Exception as e:
     print(e, file=sys.stderr)
+    raise e
     return 1
 
 
@@ -58,38 +59,44 @@ def get_args(argv=sys.argv):
   ### 'MODE' SUBPARSERS ###
   #TODO: how to add 'action' to subparser call (ie. set mode string)
   mode = parser.add_subparsers(dest='mode', metavar='MODE',
-      help="###SUBPARSER HELP### default history", )  #TODO
+      help="Program mode, default is history.", )
+  # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="###Program Configuration Help###")  # Config Mode #TODO
+      help="Configuration mode. \"./traffic_cam config -h\" for more.",
+      description="--run as root-- Configuration mode. Change " +
+        "program configurations and start/stop automatic logging.")
+  # History Mode
   history = mode.add_parser('history',
-      help="###History Display Help###")  # History Mode (default) #TODO
-  # auto_log mode hidden from help dialogue, user shouldn't interact with this
-  auto_log = mode.add_parser('auto_log',
-      add_help=False) #help="###Auto-Logger Help###")  # Auto Log Mode #TODO
+      help="History display mode. \"./traffic_cam history -h\" for more.",
+      description="History display mode. Load stored logs and display or " +
+        "save histogram.")
+  # Auto Log Mode
+  # hidden from help dialogue, user shouldn't interact with this
+  auto_log = mode.add_parser('auto_log', add_help=False)
 
   ### CONFIG MODE ARGS ###
-  #TODO: add status??
-  #TODO: add auto history
-  #TODO: help *4
+  #TODO: add status check??
+  #TODO: add auto history for splunk
   #TODO: input validation -- https://stackoverflow.com/questions/14117415/in-python-using-argparse-allow-only-positive-integers
-  config.add_argument('-i', '--interface', dest='interface', type=str,
-      help="###Not yet implemented")  # Interface to log
-  #TODO: validate interface exists
+  config.add_argument('-i', '--interface', dest='interface',
+      type=str, metavar='IF',
+      help="Name of interface to log (eth0, etc.)")  # Interface to log
   #TODO: !!! ELIMINATE FREQUENCY. ONCE PER 30S !!!
-  config.add_argument('-f', '--frequency', dest='frequency', type=int,
-      help="###Not yet implemented - recommend even divisible into hour")  # Frequency of logging
-                                                            #TODO: type??
-  config.add_argument('-p', '--filepath', dest='filepath', type=str,
-      help="###Not yet implemented")  # Path to netdev logfile
+  config.add_argument('-f', '--frequency', dest='frequency',
+      type=int, metavar='FREQ',
+      help="Interval to log in minutes. #REMOVE#")  # Frequency of logging
+  config.add_argument('-p', '--filepath', dest='filepath',
+      type=str, metavar='PATH',
+      help="Filepath to logfile for traffic data.")  # Path to netdev logfile
 
-  #TODO: need default config settings
   # START/STOP CRON JOB
   cron = config.add_mutually_exclusive_group()
+  # Apply Configs and Create Cronjob
   cron.add_argument('-a', '--apply', action='store_true',
-      help="###Not yet implemented -- need sudo/root")  # Apply config (with changes) to cronjob
-  #help: changes are only applied when --apply/-a is used to restart cron job
+      help="Apply config (with changes) and start cronjob.")
+  # Delete Cronjob
   cron.add_argument('-k', '--kill', action='store_true',
-      help="###Not yet implemented -- need sudo/root??")  # Delete cron job (if exists)
+      help="Stop cronjob if running.")
 
   # CREATE SPLUNK PANEL
   #config.add_argument('-s', '--splunk', action='store_true', help="")  # Create Splunk Panel with Current Config
@@ -97,54 +104,60 @@ def get_args(argv=sys.argv):
 
   ### HISTORY MODE ARGS ###
   source = history.add_mutually_exclusive_group(required=False)
-  source.add_argument('--load', nargs=1, type=str, metavar=('HISTORYFILE'),
-      help="###Not yet implemented")  # Load Saved History from File
+  # Load Saved History
+  source.add_argument('--load', nargs=1, type=str, metavar=('PATH'),
+      help="Load saved history data from file.")
   #TODO: validate filepath
-  source.add_argument('--logfiles', nargs='+', type=str,
-      help="###Not yet implemented")  # Specify Input NetDev Logfile(s) (if different from filepath in config)
+  # Input Logfile(s)
+  source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
+      help="Specify input netdev logfile(s).")
+  # Timeslice
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="###Not yet implemented ###0 for no limit, expected format is X-Y-Z, -Y/-Z for Y/Z minutes ago.")
-  #TODO: validate timestamp format/0 && START<=END
+      help="Timestamp window to process. Positive values are used for epoch " +
+        "timestamps. Zero (0) is unbounded, or all data. Negative values "
+        "are used for relative offset in minutes (e.g. \"--time -10 -5\" "
+        "shows records from 10 minutes ago until 5 minutes ago.")
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
-  #TODO: timestamp format string?
 
   # History Display Options
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
   display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
-      help="###Not yet implemented")  # Graph Format
+      help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
   display.add_argument('-l', '--list', dest='outputMode',
       action='store_const', const='list',
-      help="###Not yet implemented")  # List Format #TODO: remove??
+      help="Display as a list.#NOT IMPLEMENTED#")  # List Format
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
-      help="###Not yet implemented")  # List Format
+      help="Display as a formatted table.")  # Table Format
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
-      help="###Not yet implemented")  # Raw Data Format
+      help="Display raw history data.")  # Raw Data Format
   display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
       action='store_const', const='average',
-      help="###Not yet implemented")  # Raw Data Format
-  display.add_argument('-s', '--save', nargs=1, metavar=('SAVEFILE'),
-      help="###Not yet implemented")
+      help="Display average values (per second).")  # Raw Data Format
+  display.add_argument('-s', '--save', nargs=1, metavar=('PATH'),
+      help="Save raw history data to file.")
+      #TODO: multiple actions, store const x2
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
   history.add_argument('--hr', '--human', dest='human', action='store_true',
-      help="###Not yet implemented")  # Human Readable Units
+      help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
 
   ### AUTO LOG MODE ARGS ###
-  #TODO: add splunk panel mode
+  #TODO: add splunk panel/history mode
   # All args are required
+  #TODO: multiple interfaces
   auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
   auto_log.add_argument('-p', '--filepath', type=str, required=True)  # Path to netdev logfile
 
   # Set default mode to 'History'
   parser.set_default_subparser('history', insert_position=1)
 
-  print("DEBUG:", parser.parse_args())  #TODO:DBG
+  print("DEBUG:", parser.parse_args(), "\n")  #TODO:DBG
   return parser.parse_args()
 
 
@@ -156,18 +169,17 @@ def load_config(filepath=configFile):
     filepath: Relative path to program config file.
   '''
   try:
-    #TODO: fix relative path
+    #TODO: abs. filepath
     fp = Path(filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
-    raise Exception(
+    raise FileNotFoundError(
         "CONFIG ERROR: config file missing - './traffic_cam config -h'"
         ) from e
   except json.decoder.JSONDecodeError as e:
-    raise Exception(
+    raise json.decoder.JSONDecodeError(
         "CONFIG ERROR: bad config file - './traffic_cam config -h'",
-        ) from e  #TODO: raise error, exit
-  #TODO: how to differentiate between raised exceptions?
+        ) from e
 
 
 ### CONFIG MODE ###
@@ -186,10 +198,18 @@ def do_config(args):
   configs = None
   try:
     configs = load_config()
-  except Exception as e:
-    print(e, file=sys.stderr)  # warn user and continue
-    #TODO: print warning
-    #TODO: create new .conf? warn and user creates? create here (attempt), warn/quit elsewhere
+  except Exception as e:  # warn user and continue
+    print("CONFIG LOAD ERROR: {}".format(e), file=sys.stderr)
+
+  # If no args provided print saved configs
+  if args.interface is None and \
+      args.frequency is None and \
+      args.filepath is None and \
+      args.apply is False and \
+      args.kill is False:
+    print("Stored Configs: {}".format(configs))
+    return 0
+
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
     configs = configDefaults
@@ -199,25 +219,30 @@ def do_config(args):
         configs[key] = value
   configs['interface'] = args.interface if args.interface else configs['interface']
   configs['frequency'] = args.frequency if args.frequency else configs['frequency']
-  configs['filepath'] = args.filepath if args.filepath else configs['filepath']  #TODO: rename - netdev
+  #TODO: store abs. filepath
+  configs['filepath'] = args.filepath if args.filepath else configs['filepath']
+      #TODO: rename - netdev
   try:
     validate_configs(configs)
   except Exception as e:
-    raise Exception(e)
+    raise e
   with Path(configFile) as fp:  #TODO: os.path.dirname(os.path.realpath(__file__))
     try:
-      fp.write_text(json.dumps(configs)) #TODO: no need to attempt if no changes needed
-    except Exception as e:  #TODO: write access exception (x2)
-      raise Exception(e)
-  print(configs)  #TODO DBG
+      fp.write_text(json.dumps(configs))
+    except PermissionError as e:
+      raise e
+  #print(configs)  #TODO DBG
   try:
     if args.apply is True:
-      delete_cronjob()
       create_cronjob(configs)
+      print("CONFIG: Changes Applied, Auto Logger Started", file=sys.stderr)
     elif args.kill is True:
       delete_cronjob()
-  except Exception as e:  #TODO: specify exception (x2)
-    raise Exception(e)
+      print("CONFIG: Auto Logger Stopped", file=sys.stderr)
+  except PermissionError as e:
+    raise e
+  except FileNotFoundError as e:
+    print("CONFIG: Auto Logger Not Running", file=sys.stderr)
   return 0
 
 
@@ -237,12 +262,12 @@ def validate_configs(configs):
   except Exception as e:
     errors.append(e)
   try:
-    validate_filepath(configs['filepath'])  #TODO: rename - netdev
+    validate_filepath(configs['filepath'])  #TODO: rename - netdev, logfile
   except Exception as e:
     errors.append(e)
   if errors:
     raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
-        "\n{}"*len(errors)).format(*errors))
+        "\n  {}"*len(errors)).format(*errors))
 
 
 def validate_interfaces(interface):
@@ -252,10 +277,8 @@ def validate_interfaces(interface):
     interface: String, interface to check.
   '''
   if interface is None:
-    #TODO: specify exception
     raise Exception("No interface provided.")
   if interface not in get_interfaces():
-    #TODO: specify exception
     raise Exception("Interface does not exist: '{}'".format(interface))
 
 
@@ -266,7 +289,6 @@ def get_interfaces():
   '''
   netdev = Path('/proc/net/dev')
   netdevRaw = netdev.read_text().split()
-  #TODO: validate fields exist
   interfaces = list()
   idx = 20  # First interface idx (skip header strings)
   while idx < len(netdevRaw):
@@ -290,15 +312,15 @@ def validate_filepath(filepath):
   '''
   try:
     # Filepath is relative to current working directory
-    with open(filepath, 'a'):  #TODO: chmod +rw
+    with open(filepath, 'a'):  #TODO: chmod +rw ?
       pass
   except OSError as e:
-    raise OSError(e)  #TODO: remove '[Errno \d+]' - regex
+    raise e
 
 
 def create_cronjob(configs):
   #TODO: dynamic program name (sys.argv[0])
-  #TODO: add to PATH if not there (no abs/rel pathing)
+  #TODO: add to PATH if not there (no abs/rel pathing)?
   #TODO: expand filepath to absolute
   #TODO: build separate module and API for this for future use
   '''
@@ -306,28 +328,40 @@ def create_cronjob(configs):
   @param:
     configs: Dictionary of configs loaded from file.
   '''
-  if not is_super_user():  #TODO: try/exc on file creation instead
-    raise Exception("ERROR: Must be root.")
+  #if not is_super_user():  #TODO: try/exc on file creation instead
+  #  raise PermissionError("ERROR: Must be root.")
+  try:
+    delete_cronjob()
+  except FileNotFoundError as e:
+    pass # File absent, ignore
+  except PermissionError as e:
+    raise e
+
   programPath = os.path.realpath(__file__)
-  #TODO: add error output 2>> {dir(programPath)/error.log}
+  errorOutput = "2>> {}".format(errorFilepath)
+  #TODO: add 'date' timestamp
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
-      "*/{1} * * * * root {0} auto_log -i {2} -p {3}".format(
+      "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
           programPath,
           configs['frequency'],
           configs['interface'],
-          os.path.realpath(configs['filepath']) )  #TODO: rename - netdev
+          os.path.realpath(configs['filepath']),
+          errorOutput  #TODO: rename - netdev
+          )
   # 0=dir 1=freq 2=output filepath
+  #if history (arg):
   historyCronStr = \
-      "*/{1} * * * * root {0} history -s {2} --time {3} {4}".format(
+      "*/{1} * * * * root {0} history -s {2} --time {3} {4} {5}".format(
           programPath,
           configs['frequency'],
           0, #os.path.realpath(configs['save']),  #TODO
           0, #configs['startTS'],
-          0  #configs['endTS']
+          0,  #configs['endTS']
+          errorOutput
           )
-  # 0=dir 1=netdev_cron 2=history_cron
   historyCronStr = ""  #TODO DBG
+  # 0=dir 1=netdev_cron 2=history_cron
   cronStr = ''' \
 # /etc/cron.d/traffic_cam_cron: cron.d entries for the traffic_cam package
 SHELL=/bin/sh
@@ -336,35 +370,35 @@ SHELL=/bin/sh
 {1}
 '''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('x') as fp:  #TODO: change mode to create
+    with Path(cronFilepath).open('x') as fp:
       fp.write(cronStr)
-  except Exception as e:  #TODO: specify
+  #except FileNotFoundError as e:
+  except PermissionError as e:
     print('DBG')
-    raise Exception("ERROR: {}".format(e))
+    raise e
 
 
 def delete_cronjob():
   '''
   @func: Delete the cron file in '/etc/cron.d', stop auto logger.
   '''
-  #TODO: dynamic program name (sys.argv[0])
-  if not is_super_user():  #TODO: try/exc on file creation instead
-    raise Exception("ERROR: Must be root.")
+  #if not is_super_user():  #TODO: try/exc on file creation instead
+  #  raise PermissionError("ERROR: Must be root.")
   try:
     os.remove(cronFilepath)
-  except Exception as e:  #TODO: specify
-    pass
-    #TODO: ignore '[Errno 2]', raise others
-    #raise Exception("ERROR: {}".format(e))
+  except PermissionError as e:
+    raise e
+  except FileNotFoundError as e:
+    raise e
 
-
-def is_super_user():
+"""
+def is_super_user():  #TODO: remove?
   '''
   @func: Check if current user has root privileges.
   '''
   #TODO
   return True
-
+"""
 
 def generate_splunk_panel():
   '''
@@ -375,7 +409,8 @@ def generate_splunk_panel():
 
 ### HISTORY MODE ###
 #TODO: static headers (move with scroll)
-#TODO: add auto history function for auto_log to use in splunk panel mode
+#TODO: add auto history function for auto_log to use in splunk panel mode (append)
+    # start >= maxStart, end unbounded
 def do_history(args):
   '''
   @func: History Mode - Allows the user to examine the historical trends of network
@@ -395,25 +430,25 @@ def do_history(args):
   # create historyLst
   if args.load:
     historyLst = load_history(args.load,
-        args.timeslice[0], args.timeslice[1], args.human)
+        args.timeslice[0], args.timeslice[1])
   else:
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
+      print(trafficLst)
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
           args.timeslice[0], args.timeslice[1])
     historyLst = generate_history(trafficLst, args.human)
 
-  if historyLst is None:
-    return 0
+  if not historyLst:
+    raise Exception("ERROR: Not enough data to generate history")
 
   return output_history(args.outputMode, historyLst, args.save, args.human)
 
 
 def load_netdev(files, startTS=0, endTS=0):
-  #TODO: cleanup!
   '''
   @func: Creates iterable of netdev values.
   @return: List of traffic dict's
@@ -423,22 +458,28 @@ def load_netdev(files, startTS=0, endTS=0):
     endTS: Integer/Float timestamp to end at.
   '''
   trafficLst = list()
+  netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
   for filepath in files:
     try:
       with Path(filepath) as fp:
-        for line in [x for x in fp.read_text().split("\n") if x]:
+        for idx, line in enumerate([x for x in fp.read_text().split("\n") if x]):
           try:
             traffic = json.loads(line)
+            # validate keys
+            if set(traffic.keys()) != netdevKeys:
+              continue  # skip bad entries
             if (startTS == 0 or traffic['ts'] >= startTS) \
                 and (endTS == 0 or traffic['ts'] <= endTS):
-              #TODO: validate all fields
               trafficLst.append(traffic)
-          except (KeyError, json.decoder.JSONDecodeError) as e:
-            # skip bad entries
-            #print("ERROR: skipping bad line {}".format(e), file=sys.stderr)
-            continue
-    except Exception as e:  #TODO: target exceptions
-      print("ERROR: {}".format(e), file=sys.stderr)
+          except (AttributeError, TypeError, KeyError,
+              json.decoder.JSONDecodeError) as e:
+            print("ERROR: skipping line {}: \'{}\'".format(idx, line),
+                file=sys.stderr)
+            continue  # warn and skip bad entries
+    except PermissionError as e:
+      raise PermissionError("ERROR: {}".format(e)) from e
+    except FileNotFoundError as e:
+      raise FileNotFoundError("ERROR: {}".format(e)) from e
   return trafficLst if trafficLst else None
 
 
@@ -452,10 +493,8 @@ def generate_history(trafficLst, humanRead=False):
     humanRead: Bool, convert byte integer to easily read format.
   '''
   #TODO: omit None?
-  if trafficLst is None or len(trafficLst) < 2:
-    print("ERROR: Not enough data to generate history", file=sys.stderr)
-    #TODO: raise error
-    return None
+  if not trafficLst or len(trafficLst) < 2:
+    raise Exception("ERROR: Not enough data to generate history")
 
   # Sort trafficLst by timestamp, drop bad entries
   netdevKeys = set(['if', 'ts', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])  #TODO: link to parse_netdev
@@ -483,38 +522,45 @@ def generate_history(trafficLst, humanRead=False):
         historyObj['tx_b'] -= prevObj['tx_b']  # Diff Transmit Bytes
         historyObj['tx_p'] -= prevObj['tx_p']  # Diff Transmit Packets
       historyLst.append(historyObj)
-    except KeyError:
+    except KeyError:  # trafficLst should be cleaned prior, should not trigger
       print("ERROR: Skipping bad entry in dataset", file=sys.stderr)
       continue
     prevObj = traffic
   return historyLst
 
 
-def load_history(filepath, startTS=0, endTS=0):
+def load_history(files, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
   @param:
-    filepath: Path to saved history file.
+    files: Iterable of filepaths to load saved history files.
     startTS: Integer/Float timestamp to start from.
     endTS: Integer/Float timestamp to end at.
   '''
-  #TODO: handle multiple files
   #TODO: overload load_netdev??
-  try:
-    with Path(filepath) as fp:
-      historyLst = list()
-      for line in [x for x in fp.read_text().split("\n") if x]:
-        traffic = json.loads(line)
-        #TODO: json.decoder.JSONDecodeError
-        if (startTS == 0 or traffic['startTS'] >= startTS) \
-            and (endTS == 0 or traffic['endTS'] <= endTS):
-          historyLst.append(traffic)
-        #TODO: skip bad entries (key/value checks) - try/except
-      return historyLst
-  except Exception as e:  #TODO: target exceptions
-    print("ERROR: {}".format(e), file=sys.stderr)
-    return None
+  historyLst = list()
+  historyKeys = set(['startTS', 'endTS', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
+  for filepath in files:
+    try:
+      with Path(filepath) as fp:
+        for line in [x for x in fp.read_text().split("\n") if x]:
+          try:
+            traffic = json.loads(line)
+            # validate keys
+            if set(traffic.keys()) != historyKeys:
+              continue  # skip bad entries
+            if (startTS == 0 or traffic['startTS'] >= startTS) \
+                and (endTS == 0 or traffic['endTS'] <= endTS):
+              historyLst.append(traffic)
+          except (AttributeError, TypeError, KeyError,
+              json.decoder.JSONDecodeError):
+            continue  # skip bad entries
+    except (PermissionError, FileNotFoundError) as e:
+      print("LOAD ERROR: skipping bad file: {}".format(e.filename),
+          file=sys.stderr)
+      continue
+  return sorted(historyLst, key=lambda x: x['startTS'])
 
 
 def output_history(outputMode, historyLst, filepath=None, humanRead=False):
@@ -526,9 +572,7 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
-  #TODO: validation?
-  # Filepath validation for 'save' mode happens during arg parsing
-  #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
+  #filepath = load_config()['default_save_filepath'] if not filepath  #TODO ??
   switch = {
       'graph'  : display_graph,
       'table'  : display_table,
@@ -548,7 +592,6 @@ def display_graph(historyLst, _, humanRead):
   '''
   print("display_graph")  #TODO DBG
   return 0
-  pass
 
 
 def display_table(historyLst, _, humanRead):
@@ -589,43 +632,48 @@ def save_history(historyLst, filepath, _):
     Always stores raw values (byte count and epoch timestamps).
   '''
   #TODO: specify target file owner?
-  #TODO: try/exc file
-  for item in historyLst:
-    store_netdev(item, filepath)
-  return 0
+  try:
+    for item in historyLst:
+      store_netdev(item, filepath)
+    return 0
+  except Exception as e:
+    raise e
 
 
 def display_average(historyLst, _, humanRead):
   '''
   @func: CLI display average traffic values per second.
   '''
-  #TODO: try/exc
-  # Print time range
-  minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
-  maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
-  print("Average Traffic: '{}' to '{}'\n".format(
-      time.ctime(minTS),
-      time.ctime(maxTS)))
-  # Calc and print averages
-  rx_b = [x['rx_b'] for x in historyLst]
-  rx_b = sum(rx_b) / (maxTS - minTS)
-  rx_p = [x['rx_p'] for x in historyLst]
-  rx_p = sum(rx_p) / (maxTS - minTS)
-  tx_b = [x['tx_b'] for x in historyLst]
-  tx_b = sum(tx_b) / (maxTS - minTS)
-  tx_p = [x['tx_p'] for x in historyLst]
-  tx_p = sum(tx_p) / (maxTS - minTS)
-  averageStr = '''\
-Receive Data
- {0:0.0f} {1}/s
-Receive Packets
- {2:0.2f} pkt/s
-Transmit Data
- {3:0.0f} {4}/s
-Transmit Packets
- {5:0.2f} pkt/s'''
-  print(averageStr.format(*(rx_b, "B"), rx_p, *(tx_b, "B"), tx_p))  #TODO: B/MB/GB
-  return 0
+  try:
+    # Print time range
+    minTS = min(historyLst, key=lambda x: x['startTS'])['startTS']
+    maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
+    print("Average Traffic: '{}' to '{}'\n".format(
+        time.ctime(minTS),
+        time.ctime(maxTS)))
+    # Calc and print averages
+    rx_b = [x['rx_b'] for x in historyLst]
+    rx_b = sum(rx_b) / (maxTS - minTS)
+    rx_p = [x['rx_p'] for x in historyLst]
+    rx_p = sum(rx_p) / (maxTS - minTS)
+    tx_b = [x['tx_b'] for x in historyLst]
+    tx_b = sum(tx_b) / (maxTS - minTS)
+    tx_p = [x['tx_p'] for x in historyLst]
+    tx_p = sum(tx_p) / (maxTS - minTS)
+    averageStr = '''\
+  Receive Data
+  {0:0.0f} {1}/s
+  Receive Packets
+  {2:0.2f} pkt/s
+  Transmit Data
+  {3:0.0f} {4}/s
+  Transmit Packets
+  {5:0.2f} pkt/s'''
+    #TODO: human readable
+    print(averageStr.format(*(rx_b, "B"), rx_p, *(tx_b, "B"), tx_p))
+    return 0
+  except Exception as e:  #TODO: specify exception
+    raise e
 
 
 ### AUTO LOG MODE ###
@@ -634,11 +682,12 @@ def do_auto_log(args):
   @func: Auto_Log Mode - Parse /proc/net/dev and store data in logfile.
   @param: args: Namespace of argument parser.
   '''
-  #TODO: send errors to error log
-  #TODO: try
-  traffic = parse_netdev(args.interface)
-  store_netdev(traffic, args.filepath)
-  return 0
+  try:
+    traffic = parse_netdev(args.interface)
+    store_netdev(traffic, args.filepath)
+    return 0
+  except Exception as e:
+    raise e
 
 
 def parse_netdev(interface):
@@ -676,13 +725,13 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
     filepath: Path to logfile to append.
   '''
   #TODO: specify target file owner?
+  #TODO: abs. filepath
   try:
     with Path(filepath).open(mode='a') as fp:
       fp.write(json.dumps(traffic) + "\n")
     return 0
   except Exception as e:  #TODO: specify
-    print("SAVE ERROR: {}".format(e))
-    return 1
+    raise Exception("SAVE ERROR: {}".format(e))
 
 
 if __name__ == '__main__':
