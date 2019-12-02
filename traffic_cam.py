@@ -169,7 +169,7 @@ def load_config(filepath=configFile):
     filepath: Relative path to program config file.
   '''
   try:
-    #TODO: fix relative path
+    #TODO: abs. filepath
     fp = Path(filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
@@ -219,6 +219,7 @@ def do_config(args):
         configs[key] = value
   configs['interface'] = args.interface if args.interface else configs['interface']
   configs['frequency'] = args.frequency if args.frequency else configs['frequency']
+  #TODO: store abs. filepath
   configs['filepath'] = args.filepath if args.filepath else configs['filepath']
       #TODO: rename - netdev
   try:
@@ -571,7 +572,7 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
-  #filepath = read_config()['default_save_filepath'] if not filepath  #TODO ??
+  #filepath = load_config()['default_save_filepath'] if not filepath  #TODO ??
   switch = {
       'graph'  : display_graph,
       'table'  : display_table,
@@ -724,6 +725,7 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
     filepath: Path to logfile to append.
   '''
   #TODO: specify target file owner?
+  #TODO: abs. filepath
   try:
     with Path(filepath).open(mode='a') as fp:
       fp.write(json.dumps(traffic) + "\n")
