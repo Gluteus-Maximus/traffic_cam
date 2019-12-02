@@ -169,8 +169,9 @@ def load_config(filepath=configFile):
     filepath: Relative path to program config file.
   '''
   try:
-    #TODO: abs. filepath
     fp = Path(filepath)
+    if not fp.is_absolute():
+      fp = Path(os.path.dirname(os.path.realpath(__file__)), filepath)
     return json.loads(fp.read_text())
   except FileNotFoundError as e:
     raise FileNotFoundError(
