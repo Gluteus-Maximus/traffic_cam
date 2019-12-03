@@ -10,3 +10,6 @@
 # Source bashrc?? How??
 # Touch config
 # Touch error log?
+### Store Sudo Creds ###
+# sudo chmod +x traffic-cam
+# sudo chown root traffic-cam
