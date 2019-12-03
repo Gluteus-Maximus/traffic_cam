@@ -1,6 +1,7 @@
 # Recommend run as normal user to allow unprivileged use
 
 # Add PATH update to ~/.bashrc
+### Global bashrc?
 # Delete/Update if exists, else append
 
 # Limit comment begin

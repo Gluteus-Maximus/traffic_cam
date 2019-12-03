@@ -222,6 +222,7 @@ def do_config(args):
       print("\nStored Configs")
       for config in configs.items():
         print("  {:<10}: '{}'".format(*config))
+    #TODO: check if cronjob running
     return 0
 
   # Add any missing keys to existing config (attempts to correct)
