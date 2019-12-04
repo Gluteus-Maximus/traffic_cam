@@ -2,6 +2,7 @@
 
 # Add PATH update to ~/.bashrc
 ### Global bashrc?
+### Needs to update root bashrc, so run as root (alert and quit if not root)
 # Delete/Update if exists, else append
 
 # Limit comment begin
