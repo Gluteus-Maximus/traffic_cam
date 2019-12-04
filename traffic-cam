@@ -715,19 +715,20 @@ def parse_netdev(interface):
       gathered.
   '''
   netdev = Path('/proc/net/dev')
-  trafficRaw = netdev.read_text().split()
-  #TODO: validate fields exist
-  #TODO: try interface name, exception if not present
-  idxZero = trafficRaw.index(interface + ":")
-  traffic = dict([  #TODO: shrink names
-      ('if', interface),                       # Interface
-      ('ts', int(time.time())),                # Timestamp
-      ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
-      ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
-      ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
-      ('tx_p', int(trafficRaw[idxZero + 10]))  # Transmit Packets
-      ])
-  return traffic
+  try:
+    trafficRaw = netdev.read_text().split()
+    idxZero = trafficRaw.index(interface + ":")
+    traffic = dict([
+        ('if', interface),                       # Interface
+        ('ts', int(time.time())),                # Timestamp
+        ('rx_b', int(trafficRaw[idxZero + 1])),  # Receive Bytes
+        ('rx_p', int(trafficRaw[idxZero + 2])),  # Receive Packets
+        ('tx_b', int(trafficRaw[idxZero + 9])),  # Transmit Bytes
+        ('tx_p', int(trafficRaw[idxZero + 10]))  # Transmit Packets
+        ])
+    return traffic
+  except Exception as e:  #TODO: specify
+    raise e
 
 
 def store_netdev(traffic, filepath):  #TODO: rename to store_dict
