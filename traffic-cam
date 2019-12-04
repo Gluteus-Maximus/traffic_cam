@@ -24,7 +24,8 @@ configFile = os.path.join(globalProgramDir, '.traffic_cam.conf')
 configDefaults = {
     'interface': None,
     'frequency': 1,
-    'filepath':  os.path.join(globalProgramDir, 'netdev.log')
+    'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
+    'maxlogsize': 100  # MB size limit of netdev log file #TODO
     }
 errorFilepath = '/var/log/traffic_cam.log'
 cronFilepath = '/etc/cron.d/traffic_cam_cron'
