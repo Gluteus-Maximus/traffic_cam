@@ -20,15 +20,15 @@ from default_subparser import set_default_subparser
 ### GLOBAL VARIABLES ###
 global globalProgramDir
 globalProgramDir = os.path.dirname(os.path.realpath(__file__))
-configFile = os.path.join(globalProgramDir, '.traffic_cam.conf')
+configFile = os.path.join(globalProgramDir, '.traffic-cam.conf')
 configDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 100  # MB size limit of netdev log file #TODO
     }
-errorFilepath = '/var/log/traffic_cam.log'
-cronFilepath = '/etc/cron.d/traffic_cam_cron'
+errorFilepath = '/var/log/traffic-cam.log'
+cronFilepath = '/etc/cron.d/traffic-cam-cron'
 
 
 def main():

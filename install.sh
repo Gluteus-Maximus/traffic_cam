@@ -1,5 +1,5 @@
 #!/bin/bash
-# Recommend run as normal user to allow unprivileged use
+# Recommend run as normal user to allow unprivileged use of certain files
 # Run from same directory as program file
 PROG_FILE=$(pwd)/traffic-cam
 CONF_FILE=$(pwd)/.traffic-cam.conf
