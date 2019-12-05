@@ -7,26 +7,31 @@ ERR_FILE=/var/log/traffic-cam.log
 PATH_FILE=/etc/profile.d/traffic-cam.sh
 
 #TODO: check results before 'done'
+# Add Config File
 echo "Create config file:  '$CONF_FILE'"
 touch $CONF_FILE
 chmod 664 $CONF_FILE
 echo "   done"
-### Sudo Commands ###
+
+# Add Error Log
 echo "Create error file:   '$ERR_FILE'"
 sudo touch $ERR_FILE
 sudo chmod 664 $ERR_FILE
 echo "   done"
+
 # Add global PATH update to /etc/profile.d/
 echo "Add program to PATH: '$PATH_FILE'"
-sudo touch $PATH_FILE
+#sudo touch $PATH_FILE
 # echo file contents to PATH_FILE
 CONTENT="#!/bin/bash"
 CONTENT+="\n# Add traffic-cam directory to PATH"
 CONTENT+="\n"
-CONTENT+="\nPATH=$PATH:$(pwd)"
-sudo sh -c "echo -e $CONTENT > $PATH_FILE"
-# Source profile.d?? How??
+CONTENT+="\nPATH=\$PATH:$(pwd)"
+sudo sh -c "echo '$CONTENT' > $PATH_FILE"
+source $PATH_FILE  #TODO: source not working
 echo "   done"
+
+# Pre-Configure Program File (permissions)
 echo "Configure program:   '$PROG_FILE'"
 sudo chown root $PROG_FILE
 sudo chgrp root $PROG_FILE
