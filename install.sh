@@ -20,6 +20,12 @@ echo "   done"
 echo "Add program to PATH: '$PATH_FILE'"
 sudo touch $PATH_FILE
 # echo file contents to PATH_FILE
+CONTENT="#!/bin/bash"
+CONTENT+="\n# Add traffic-cam directory to PATH"
+CONTENT+="\n"
+CONTENT+="\nPATH=$PATH:$(pwd)"
+echo $CONTENT
+sudo sh -c "echo $CONTENT > $PATH_FILE"
 # Source profile.d?? How??
 echo "   done"
 echo "Configure program:   '$PROG_FILE'"
