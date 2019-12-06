@@ -1,10 +1,14 @@
 #!/bin/bash
+# This script is idempotent, and can be run at any time to update file
+#  location, recreate deleted error or config file, or fix program file
+#  permissions.
 # Recommend run as normal user to allow unprivileged use of certain files
 # Run from same directory as program file
 PROG_FILE=$(pwd)/traffic-cam
 CONF_FILE=$(pwd)/.traffic-cam.conf
 ERR_FILE=/var/log/traffic-cam.log
 SYM_LINK=/usr/local/bin/traffic-cam  # cli command defined by name of sym link
+#TODO: ^ if /usr/local/bin/ exists, else /usr/bin/
 #PATH_FILE=/etc/profile.d/traffic-cam.sh
 
 #TODO: check results before 'done'
@@ -34,7 +38,7 @@ source $PATH_FILE  #TODO: source not working
 echo "   done"
 '''
 # Add Symbolic Link
-sudo ln -s $PROG_FILE $SYM_LINK
+sudo ln -sf $PROG_FILE $SYM_LINK
 
 # Pre-Configure Program File (permissions)
 echo "Configure program:   '$PROG_FILE'"
