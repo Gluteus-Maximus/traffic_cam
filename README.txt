@@ -1,3 +1,5 @@
+TODO: move default_subparser.py to a subdirectory.
+
 Note: If traffic_cam directory is moved or files renamed after creating cron
     job ("./traffic_cam config --apply") auto-logging functionality will
     break.
