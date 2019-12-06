@@ -69,12 +69,12 @@ def get_args(argv=sys.argv):
       help="Program mode, default is history.", )
   # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="Configuration mode. \"./traffic_cam config -h\" for more.",
+      help="Configuration mode. \'./traffic_cam config -h\' for more.",
       description="Configuration mode. Change program configurations and " +
         "start/stop automatic logging.")
   # History Mode
   history = mode.add_parser('history',
-      help="History display mode. \"./traffic_cam history -h\" for more.",
+      help="History display mode. \'./traffic_cam history -h\' for more.",
       description="History display mode. Load stored logs and display or " +
         "save histogram.")
   # Auto Log Mode
@@ -122,7 +122,7 @@ def get_args(argv=sys.argv):
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
       help="Timestamp window to process. Positive values are used for epoch " +
         "timestamps. Zero (0) is unbounded, or all data. Negative values "
-        "are used for relative offset in minutes (e.g. \"--time -10 -5\" "
+        "are used for relative offset in minutes (e.g. \'--time -10 -5\' "
         "shows records from 10 minutes ago until 5 minutes ago.")
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
