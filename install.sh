@@ -25,7 +25,9 @@ sudo chmod 664 $ERR_FILE
 echo "   done"
 
 # Add Symbolic Link (global cli calls)
+echo "Add symbolic link:   '$SYM_LINK'"
 sudo ln -sf $PROG_FILE $SYM_LINK
+echo "   done"
 
 # Pre-Configure Program File (permissions)
 echo "Configure program:   '$PROG_FILE'"
