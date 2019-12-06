@@ -9,7 +9,6 @@ CONF_FILE=$(pwd)/.traffic-cam.conf
 ERR_FILE=/var/log/traffic-cam.log
 SYM_LINK=/usr/local/bin/traffic-cam  # cli command defined by name of sym link
 #TODO: ^ if /usr/local/bin/ exists, else /usr/bin/
-#PATH_FILE=/etc/profile.d/traffic-cam.sh
 
 #TODO: check results before 'done'
 # Add Config File
@@ -24,20 +23,7 @@ sudo touch $ERR_FILE
 sudo chmod 664 $ERR_FILE
 echo "   done"
 
-'''
-# Add global PATH update to /etc/profile.d/
-echo "Add program to PATH: '$PATH_FILE'"
-#sudo touch $PATH_FILE
-# echo file contents to PATH_FILE
-CONTENT="#!/bin/bash"
-CONTENT+="\n# Add traffic-cam directory to PATH"
-CONTENT+="\n"
-CONTENT+="\nPATH=\$PATH:$(pwd)"
-sudo sh -c "echo '$CONTENT' > $PATH_FILE"
-source $PATH_FILE  #TODO: source not working
-echo "   done"
-'''
-# Add Symbolic Link
+# Add Symbolic Link (global cli calls)
 sudo ln -sf $PROG_FILE $SYM_LINK
 
 # Pre-Configure Program File (permissions)
