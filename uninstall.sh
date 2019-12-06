@@ -1,6 +1,7 @@
 #!/bin/bash
-### Delete /etc/profile.d entry
-### Delete error log
+# Remove traffic-cam artifacts from filesystem
 ERR_FILE=/var/log/traffic-cam.log
-PATH_FILE=/etc/profile.d/traffic-cam.sh
+SYM_LINK=/usr/local/bin/traffic-cam
 
+sudo rm $ERR_FILE
+sudo rm $SYM_LINK

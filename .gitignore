@@ -2,6 +2,6 @@ __pycache__/
 *.sw?
 *.gz
 /test/
-.traffic_cam.conf
+.traffic-cam.conf
 netdev.log
 *.log
