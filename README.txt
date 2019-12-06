@@ -1,5 +1,6 @@
 Note: If traffic_cam directory is moved or files renamed after creating cron
-job ("./traffic_cam config --apply") auto-logging functionality will break.
+    job ("./traffic_cam config --apply") auto-logging functionality will
+    break.
 
 Note: Error log will go in "/var/log/traffic_cam.log". Access is restricted
     to root.
@@ -41,5 +42,8 @@ Note: .traffic_cam.conf must have read permissions for all users of
 Note: Add traffic_cam to PATH ##TODO: make bash setup script
 
 Note: To install, move file directory to desired location, then run
-install.sh as a normal user (you will need sudo credentials for part of
-this script).
+    install.sh as a normal user (you will need sudo credentials for part
+    of this script).
+
+Note: install.sh can be used to update directory path after moving the
+    program.
