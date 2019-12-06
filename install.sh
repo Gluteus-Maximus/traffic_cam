@@ -1,4 +1,5 @@
 #!/bin/bash
+# Create files and set permissions necessary to use traffic-cam program.
 # This script is idempotent, and can be run at any time to update file
 #  location, recreate deleted error or config file, or fix program file
 #  permissions.
