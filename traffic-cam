@@ -15,6 +15,7 @@ from default_subparser import set_default_subparser
   # allow unbounded?  default value in globals.  filesize?
 #TODO: replace hardcode .py helpstrings with __file__ formats
 #TODO: add setup.sh (update PATH in bashrc)
+#TODO: monitor multiple interfaces
 
 
 ### GLOBAL VARIABLES ###
