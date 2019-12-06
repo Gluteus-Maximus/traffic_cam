@@ -120,7 +120,7 @@ def get_args(argv=sys.argv):
       help="Specify input netdev logfile(s).")
   # Timeslice
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="Timestamp window to process. Positive values are used for epoch " +
+      help="Timestamp window to process. Positive values are used for epoch "
         "timestamps. Zero (0) is unbounded, or all data. Negative values "
         "are used for relative offset in minutes (e.g. \'--time -10 -5\' "
         "shows records from 10 minutes ago until 5 minutes ago.")
