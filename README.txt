@@ -39,3 +39,7 @@ Note: .traffic_cam.conf must have read permissions for all users of
     program.
 
 Note: Add traffic_cam to PATH ##TODO: make bash setup script
+
+Note: To install, move file directory to /usr/local/bin (or ~/bin if
+only one user should be able to use), then run install.sh as a normal
+user (you will need sudo credentials for part of this script).
