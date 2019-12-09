@@ -28,7 +28,7 @@ configDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
-    'maxlogsize': 100  # MB size limit of netdev log file #TODO type=float
+    'maxlogsize': 10  # MB size limit of netdev log file #TODO type=float
     }
 errorFilepath = '/var/log/traffic-cam.log'
 cronFilepath = '/etc/cron.d/traffic-cam-cron'
@@ -746,6 +746,7 @@ def do_auto_log(args):
   try:
     traffic = parse_netdev(args.interface)
     store_netdev(traffic, args.filepath)
+    rotate_file(args.filepath, load_config()['maxlogsize'] * 10**6)
     return 0
   except Exception as e:
     raise e
