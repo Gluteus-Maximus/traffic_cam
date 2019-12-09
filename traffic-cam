@@ -16,6 +16,8 @@ from default_subparser import set_default_subparser
 #TODO: replace hardcode .py helpstrings with __file__ formats
 #TODO: add setup.sh (update PATH in bashrc)
 #TODO: monitor multiple interfaces
+#TODO: Path.resolve()
+#TODO: cronjob status in 'config' readout
 
 
 ### GLOBAL VARIABLES ###
@@ -26,7 +28,7 @@ configDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
-    'maxlogsize': 100  # MB size limit of netdev log file #TODO
+    'maxlogsize': 100  # MB size limit of netdev log file #TODO type=float
     }
 errorFilepath = '/var/log/traffic-cam.log'
 cronFilepath = '/etc/cron.d/traffic-cam-cron'
@@ -180,6 +182,25 @@ def absolute_posixpath(filepath):
   if not fp.is_absolute():
     fp = Path(globalProgramDir, filepath)
   return fp
+
+
+def rotate_file(filepath, sizeLimit):
+  '''
+  @func: 
+  @return: Number of lines removed.
+  @param:
+    filepath: File to rotate.
+    sizeLimit: Max file size in bytes.
+  '''
+  fp = Path(filepath)
+  totalCount = 0
+  diff = fp.stat().st_size - sizeLimit
+  while diff > 0:
+    count = int(diff / 200)  #TODO: base on avg size of line
+    os.system("sed -i {} -e '1,{} D'".format(fp, count))
+    totalCount += count if count > 0 else 1
+    diff = fp.stat().st_size - sizeLimit
+  return totalCount
 
 
 def load_config(filepath=configFile):
