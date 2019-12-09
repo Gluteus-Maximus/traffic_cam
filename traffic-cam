@@ -489,7 +489,7 @@ def do_history(args):
 
   # offset timeslice for negative values
   for idx, val in enumerate(args.timeslice):
-    if val < 0:
+    if val < 0:  # negative values: back in time <val> minutes
       args.timeslice[idx] = time.time() - (-val * 60)
 
   # create historyLst
@@ -500,7 +500,6 @@ def do_history(args):
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
-      print(trafficLst)
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
