@@ -11,13 +11,11 @@ from default_subparser import set_default_subparser
 
 #TODO: this file must be owned by root/su, executable by all if possible
 #TODO: filewide: raise <exc>() from e
-#TODO: add time window to config - delete logs prior to window (call in store_netdev)
-  # allow unbounded?  default value in globals.  filesize?
 #TODO: replace hardcode .py helpstrings with __file__ formats
-#TODO: add setup.sh (update PATH in bashrc)
 #TODO: monitor multiple interfaces
 #TODO: Path.resolve()
 #TODO: cronjob status in 'config' readout
+#TODO: call rotate_file in all logs
 
 
 ### GLOBAL VARIABLES ###
@@ -28,7 +26,7 @@ configDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
-    'maxlogsize': 10  # MB size limit of netdev log file #TODO type=float
+    'maxlogsize': 10  # MB size limit of netdev log file
     }
 errorFilepath = '/var/log/traffic-cam.log'
 cronFilepath = '/etc/cron.d/traffic-cam-cron'
@@ -265,6 +263,8 @@ def do_config(args):
       print("\nStored Configs")
       for config in configs.items():
         print("  {:<10}: '{}'".format(*config))
+      print("  {:<10}: {}".format("Cronjob",
+          "Running" if Path(cronFilepath).exists() else "Stopped"))
     #TODO: check if cronjob running
     return 0
 
