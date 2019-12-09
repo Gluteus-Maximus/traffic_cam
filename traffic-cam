@@ -16,20 +16,21 @@ from default_subparser import set_default_subparser
 #TODO: Path.resolve()
 #TODO: cronjob status in 'config' readout
 #TODO: call rotate_file in all logs
+#TODO: time str to epoch (standardize format for input/output time)
 
 
 ### GLOBAL VARIABLES ###
-global globalProgramDir
 globalProgramDir = os.path.dirname(os.path.realpath(__file__))
-configFile = os.path.join(globalProgramDir, '.traffic-cam.conf')
-configDefaults = {
+globalProgramDir = os.path.join(globalProgramDir, '.traffic-cam.conf')
+globalConfigDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 10  # MB size limit of netdev log file
     }
-errorFilepath = '/var/log/traffic-cam.log'
-cronFilepath = '/etc/cron.d/traffic-cam-cron'
+globalErrorFilepath = '/var/log/traffic-cam.log'
+globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
+globalDateFormat = '%Y-%m-%d-%H:%M:%S'
 
 
 def main():
@@ -204,7 +205,7 @@ def rotate_file(filepath, sizeLimit):
   return totalCount
 
 
-def load_config(filepath=configFile):
+def load_config(filepath=globalProgramDir):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
@@ -264,15 +265,15 @@ def do_config(args):
       for config in configs.items():
         print("  {:<10}: '{}'".format(*config))
       print("  {:<10}: {}".format("Cronjob",
-          "Running" if Path(cronFilepath).exists() else "Stopped"))
+          "Running" if Path(globalCronFilepath).exists() else "Stopped"))
     #TODO: check if cronjob running
     return 0
 
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
-    configs = configDefaults
+    configs = globalConfigDefaults
   else:
-    for key, value in configDefaults.items():
+    for key, value in globalConfigDefaults.items():
       if key not in configs.keys():  #TODO: correct or error out???
         configs[key] = value
   configs['interface'] = \
@@ -289,7 +290,7 @@ def do_config(args):
     validate_configs(configs)
   except Exception as e:
     raise e
-  with Path(configFile) as fp:
+  with Path(globalProgramDir) as fp:
     try:
       fp.write_text(json.dumps(configs))
     except PermissionError as e:
@@ -404,7 +405,7 @@ def create_cronjob(configs):
     raise e
 
   programPath = os.path.realpath(__file__)
-  errorOutput = "2>> {}".format(errorFilepath)
+  errorOutput = "2>> {}".format(globalErrorFilepath)
   #TODO: add 'date' timestamp
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
@@ -436,7 +437,7 @@ SHELL=/bin/sh
 {1}
 '''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('x') as fp:
+    with Path(globalCronFilepath).open('x') as fp:
       fp.write(cronStr)
   #except FileNotFoundError as e:
   except PermissionError as e:
@@ -450,7 +451,7 @@ def delete_cronjob():
   #if not is_super_user():  #TODO: try/exc on file creation instead
   #  raise PermissionError("ERROR: Must be root.")
   try:
-    os.remove(cronFilepath)
+    os.remove(globalCronFilepath)
   except PermissionError as e:
     raise e
   except FileNotFoundError as e:
