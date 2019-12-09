@@ -98,6 +98,9 @@ def get_args(argv=sys.argv):
   config.add_argument('-p', '--filepath', dest='filepath',
       type=str, metavar='PATH',
       help="Filepath to logfile for traffic data.")  # Path to netdev logfile
+  config.add_argument('-l', '--limit', dest='maxlogsize',
+      type=float, metavar='SIZE',
+      help="Size limit of logfile in MB.")  # Size limit for logfile
 
   # START/STOP CRON JOB
   cron = config.add_mutually_exclusive_group()
@@ -255,6 +258,7 @@ def do_config(args):
   if args.interface is None and \
       args.frequency is None and \
       args.filepath is None and \
+      args.maxlogsize is None and \
       args.apply is False and \
       args.kill is False:
     if configs:
@@ -271,12 +275,16 @@ def do_config(args):
     for key, value in configDefaults.items():
       if key not in configs.keys():  #TODO: correct or error out???
         configs[key] = value
-  configs['interface'] = args.interface if args.interface else configs['interface']
-  configs['frequency'] = args.frequency if args.frequency else configs['frequency']
+  configs['interface'] = \
+      args.interface if args.interface else configs['interface']
+  configs['frequency'] = \
+      args.frequency if args.frequency else configs['frequency']
   # store absolute filepath
   configs['filepath'] = \
       os.path.realpath(args.filepath) if args.filepath else configs['filepath']
       #TODO: rename - netdev
+  configs['maxlogsize'] = \
+      args.maxlogsize if args.maxlogsize else configs['maxlogsize']
   try:
     validate_configs(configs)
   except Exception as e:
