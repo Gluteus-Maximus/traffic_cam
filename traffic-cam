@@ -16,6 +16,8 @@ from default_subparser import set_default_subparser
 #TODO: replace hardcode .py helpstrings with __file__ formats
 #TODO: add setup.sh (update PATH in bashrc)
 #TODO: monitor multiple interfaces
+#TODO: Path.resolve()
+#TODO: cronjob status in 'config' readout
 
 
 ### GLOBAL VARIABLES ###
@@ -26,7 +28,7 @@ configDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
-    'maxlogsize': 100  # MB size limit of netdev log file #TODO
+    'maxlogsize': 10  # MB size limit of netdev log file #TODO type=float
     }
 errorFilepath = '/var/log/traffic-cam.log'
 cronFilepath = '/etc/cron.d/traffic-cam-cron'
@@ -96,6 +98,9 @@ def get_args(argv=sys.argv):
   config.add_argument('-p', '--filepath', dest='filepath',
       type=str, metavar='PATH',
       help="Filepath to logfile for traffic data.")  # Path to netdev logfile
+  config.add_argument('-l', '--limit', dest='maxlogsize',
+      type=float, metavar='SIZE',
+      help="Size limit of logfile in MB.")  # Size limit for logfile
 
   # START/STOP CRON JOB
   cron = config.add_mutually_exclusive_group()
@@ -182,6 +187,25 @@ def absolute_posixpath(filepath):
   return fp
 
 
+def rotate_file(filepath, sizeLimit):
+  '''
+  @func: 
+  @return: Number of lines removed.
+  @param:
+    filepath: File to rotate.
+    sizeLimit: Max file size in bytes.
+  '''
+  fp = Path(filepath)
+  totalCount = 0
+  diff = fp.stat().st_size - sizeLimit
+  while diff > 0:
+    count = int(diff / 200)  #TODO: base on avg size of line
+    os.system("sed -i {} -e '1,{} D'".format(fp, count))
+    totalCount += count if count > 0 else 1
+    diff = fp.stat().st_size - sizeLimit
+  return totalCount
+
+
 def load_config(filepath=configFile):
   '''
   @func: Loads and returns config settings.
@@ -234,6 +258,7 @@ def do_config(args):
   if args.interface is None and \
       args.frequency is None and \
       args.filepath is None and \
+      args.maxlogsize is None and \
       args.apply is False and \
       args.kill is False:
     if configs:
@@ -250,12 +275,16 @@ def do_config(args):
     for key, value in configDefaults.items():
       if key not in configs.keys():  #TODO: correct or error out???
         configs[key] = value
-  configs['interface'] = args.interface if args.interface else configs['interface']
-  configs['frequency'] = args.frequency if args.frequency else configs['frequency']
+  configs['interface'] = \
+      args.interface if args.interface else configs['interface']
+  configs['frequency'] = \
+      args.frequency if args.frequency else configs['frequency']
   # store absolute filepath
   configs['filepath'] = \
       os.path.realpath(args.filepath) if args.filepath else configs['filepath']
       #TODO: rename - netdev
+  configs['maxlogsize'] = \
+      args.maxlogsize if args.maxlogsize else configs['maxlogsize']
   try:
     validate_configs(configs)
   except Exception as e:
@@ -460,7 +489,7 @@ def do_history(args):
 
   # offset timeslice for negative values
   for idx, val in enumerate(args.timeslice):
-    if val < 0:
+    if val < 0:  # negative values: back in time <val> minutes
       args.timeslice[idx] = time.time() - (-val * 60)
 
   # create historyLst
@@ -471,7 +500,6 @@ def do_history(args):
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
-      print(trafficLst)
     else:
       config = load_config()
       trafficLst = load_netdev([config['filepath']],
@@ -717,6 +745,7 @@ def do_auto_log(args):
   try:
     traffic = parse_netdev(args.interface)
     store_netdev(traffic, args.filepath)
+    rotate_file(args.filepath, load_config()['maxlogsize'] * 10**6)
     return 0
   except Exception as e:
     raise e
