@@ -115,17 +115,15 @@ def get_args(argv=sys.argv):
   #TODO
 
   ### HISTORY MODE ARGS ###
+  # Alternate Input Source
+  #TODO: validate filepaths
   source = history.add_mutually_exclusive_group(required=False)
-  # Load Saved History
   source.add_argument('--load-history', '--hist', nargs=1, type=str, metavar=('PATH'),
       dest='history', help="Load saved history data from file.")
-  #TODO: validate filepath
-  # Input Logfile(s)
   source.add_argument('--load-logs', '--logs', nargs='+', type=str, metavar=('PATH'),
       dest='logfiles', help="Specify input netdev logfile(s).")
-  #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
-  # History Display Options
+  # History Display Formats
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
   display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
@@ -147,6 +145,8 @@ def get_args(argv=sys.argv):
       #TODO: multiple actions, store const x2
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
+
+  # Display Format Modifiers
   history.add_argument('--hr', '--human', dest='human', action='store_true',
       help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
