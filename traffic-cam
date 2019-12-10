@@ -117,12 +117,12 @@ def get_args(argv=sys.argv):
   ### HISTORY MODE ARGS ###
   source = history.add_mutually_exclusive_group(required=False)
   # Load Saved History
-  source.add_argument('--load', nargs=1, type=str, metavar=('PATH'),
-      help="Load saved history data from file.")
+  source.add_argument('--load-history', '--hist', nargs=1, type=str, metavar=('PATH'),
+      dest='history', help="Load saved history data from file.")
   #TODO: validate filepath
   # Input Logfile(s)
-  source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
-      help="Specify input netdev logfile(s).")
+  source.add_argument('--load-logs', '--logs', nargs='+', type=str, metavar=('PATH'),
+      dest='logfiles', help="Specify input netdev logfile(s).")
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
   # History Display Options
@@ -507,8 +507,8 @@ def do_history(args):
       args.timeslice[idx] = time.time() - (-val * 60)
 
   # create historyLst
-  if args.load:
-    historyLst = load_history(args.load,
+  if args.history:
+    historyLst = load_history(args.history,
         args.timeslice[0], args.timeslice[1])
   else:
     if args.logfiles:
