@@ -16,25 +16,26 @@ from default_subparser import set_default_subparser
 #TODO: Path.resolve()
 #TODO: cronjob status in 'config' readout
 #TODO: call rotate_file in all logs
+#TODO: scrolling headers (display)
 
 
 ### GLOBAL VARIABLES ###
-global globalProgramDir
 globalProgramDir = os.path.dirname(os.path.realpath(__file__))
-configFile = os.path.join(globalProgramDir, '.traffic-cam.conf')
-configDefaults = {
+globalProgramDir = os.path.join(globalProgramDir, '.traffic-cam.conf')
+globalConfigDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 10  # MB size limit of netdev log file
     }
-errorFilepath = '/var/log/traffic-cam.log'
-cronFilepath = '/etc/cron.d/traffic-cam-cron'
+globalErrorFilepath = '/var/log/traffic-cam.log'
+globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
+globalDateFormat = '%Y.%m.%d.%H:%M:%S'
 
 
 def main():
   '''
-  @func: Primary handler function for program.
+  @func: Primary function for program.
   '''
   args = get_args()
   switch = {
@@ -122,13 +123,6 @@ def get_args(argv=sys.argv):
   # Input Logfile(s)
   source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
       help="Specify input netdev logfile(s).")
-  # Timeslice
-  history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="Timestamp window to process. Positive values are used for epoch "
-        "timestamps. Zero (0) is unbounded, or all data. Negative values "
-        "are used for relative offset in minutes (e.g. \'--time -10 -5\' "
-        "shows records from 10 minutes ago until 5 minutes ago.")
-  #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
   # History Display Options
@@ -157,6 +151,16 @@ def get_args(argv=sys.argv):
       help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
+  # Timeslice
+  timeHelpStr="Timestamp window to process. Positive values are used for epoch "\
+    "timestamps. A formatted date string can be used instead of timestamp "\
+    "(eg. '{}'). Zero (0) is unbounded, or all data. "\
+    "Negative values are used for relative offset in minutes (eg. "\
+    "\'--time -10 -5\' shows records from 10 minutes ago until 5 minutes ago)."
+    #TODO: format globalDateFormat with time.strftime instead of hardcode date
+  history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
+      help=timeHelpStr.format(ts_to_str(-5752444859, globalDateFormat)))
+  #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
 
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel/history mode
@@ -204,7 +208,17 @@ def rotate_file(filepath, sizeLimit):
   return totalCount
 
 
-def load_config(filepath=configFile):
+def str_to_ts(dateStr, formatStr):
+  timeObj = time.strptime(dateStr, formatStr)
+  return time.mktime(timeObj)
+
+
+def ts_to_str(timestamp, formatStr):
+  timeObj = time.localtime(timestamp)
+  return time.strftime(formatStr, timeObj)
+
+
+def load_config(filepath=globalProgramDir):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
@@ -262,17 +276,17 @@ def do_config(args):
     if configs:
       print("\nStored Configs")
       for config in configs.items():
-        print("  {:<10}: '{}'".format(*config))
-      print("  {:<10}: {}".format("Cronjob",
-          "Running" if Path(cronFilepath).exists() else "Stopped"))
+        print("  {:<11}: '{}'".format(*config))
+      print("  {:<11}: {}".format("Cronjob",
+          "Running" if Path(globalCronFilepath).exists() else "Stopped"))
     #TODO: check if cronjob running
     return 0
 
   # Add any missing keys to existing config (attempts to correct)
   if configs is None:
-    configs = configDefaults
+    configs = globalConfigDefaults
   else:
-    for key, value in configDefaults.items():
+    for key, value in globalConfigDefaults.items():
       if key not in configs.keys():  #TODO: correct or error out???
         configs[key] = value
   configs['interface'] = \
@@ -289,7 +303,7 @@ def do_config(args):
     validate_configs(configs)
   except Exception as e:
     raise e
-  with Path(configFile) as fp:
+  with Path(globalProgramDir) as fp:
     try:
       fp.write_text(json.dumps(configs))
     except PermissionError as e:
@@ -404,7 +418,7 @@ def create_cronjob(configs):
     raise e
 
   programPath = os.path.realpath(__file__)
-  errorOutput = "2>> {}".format(errorFilepath)
+  errorOutput = "2>> {}".format(globalErrorFilepath)
   #TODO: add 'date' timestamp
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
@@ -436,7 +450,7 @@ SHELL=/bin/sh
 {1}
 '''.format(netdevCronStr, historyCronStr)
   try:
-    with Path(cronFilepath).open('x') as fp:
+    with Path(globalCronFilepath).open('x') as fp:
       fp.write(cronStr)
   #except FileNotFoundError as e:
   except PermissionError as e:
@@ -450,7 +464,7 @@ def delete_cronjob():
   #if not is_super_user():  #TODO: try/exc on file creation instead
   #  raise PermissionError("ERROR: Must be root.")
   try:
-    os.remove(cronFilepath)
+    os.remove(globalCronFilepath)
   except PermissionError as e:
     raise e
   except FileNotFoundError as e:
@@ -664,12 +678,15 @@ def display_table(historyLst, _, humanRead):
   '''
   if not historyLst:
     return 1
-  print("Timestamp.....RX Bytes.....RX Packets.....TX Bytes.....TX Packets")
+  #TODO: scrolling header
+  print("{:.<24}{:.<13}{:.<12}{:.<13}{}".format(
+      "Timestamp", "RX Bytes", "Packets", "TX Bytes", "Packets"))
   for item in historyLst:
     #TODO: fix format, use ascii lines
-    print("{} | {} | {} | {} | {}".format(
-      time.ctime(item['endTS']), item['rx_b'], item['rx_p'], item['tx_b'], item['tx_p'])
-      )
+    print("{} | {:10} | {:9} | {:10} | {:9}".format(
+        ts_to_str(item['endTS'], globalDateFormat), item['rx_b'],
+            item['rx_p'], item['tx_b'], item['tx_p'])
+        )
   return 0
 
 
