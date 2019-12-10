@@ -21,7 +21,7 @@ from default_subparser import set_default_subparser
 
 ### GLOBAL VARIABLES ###
 globalProgramDir = os.path.dirname(os.path.realpath(__file__))
-globalProgramDir = os.path.join(globalProgramDir, '.traffic-cam.conf')
+globalConfigFilepath = os.path.join(globalProgramDir, '.traffic-cam.conf')
 globalConfigDefaults = {
     'interface': None,
     'frequency': 1,
@@ -218,7 +218,7 @@ def ts_to_str(timestamp, formatStr):
   return time.strftime(formatStr, timeObj)
 
 
-def load_config(filepath=globalProgramDir):
+def load_config(filepath=globalConfigFilepath):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
@@ -303,7 +303,7 @@ def do_config(args):
     validate_configs(configs)
   except Exception as e:
     raise e
-  with Path(globalProgramDir) as fp:
+  with Path(globalConfigFilepath) as fp:
     try:
       fp.write_text(json.dumps(configs))
     except PermissionError as e:
