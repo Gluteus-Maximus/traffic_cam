@@ -213,6 +213,11 @@ def str_to_ts(dateStr, formatStr):
   return time.mktime(timeObj)
 
 
+def ts_to_str(timestamp, formatStr):
+  timeObj = time.localtime(timestamp)
+  return time.strftime(formatStr, timeObj)
+
+
 def load_config(filepath=globalProgramDir):
   '''
   @func: Loads and returns config settings.
