@@ -16,7 +16,7 @@ from default_subparser import set_default_subparser
 #TODO: Path.resolve()
 #TODO: cronjob status in 'config' readout
 #TODO: call rotate_file in all logs
-#TODO: time str to epoch (standardize format for input/output time)
+#TODO: scrolling headers (display)
 
 
 ### GLOBAL VARIABLES ###
@@ -30,12 +30,12 @@ globalConfigDefaults = {
     }
 globalErrorFilepath = '/var/log/traffic-cam.log'
 globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
-globalDateFormat = '%Y-%m-%d-%H:%M:%S'
+globalDateFormat = '%Y.%m.%d.%H:%M:%S'
 
 
 def main():
   '''
-  @func: Primary handler function for program.
+  @func: Primary function for program.
   '''
   args = get_args()
   switch = {
@@ -123,13 +123,6 @@ def get_args(argv=sys.argv):
   # Input Logfile(s)
   source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
       help="Specify input netdev logfile(s).")
-  # Timeslice
-  history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
-      help="Timestamp window to process. Positive values are used for epoch "
-        "timestamps. Zero (0) is unbounded, or all data. Negative values "
-        "are used for relative offset in minutes (e.g. \'--time -10 -5\' "
-        "shows records from 10 minutes ago until 5 minutes ago.")
-  #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
   #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
 
   # History Display Options
@@ -158,6 +151,16 @@ def get_args(argv=sys.argv):
       help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
   #https://stackoverflow.com/questions/19414060/argparse-required-argument-y-if-x-is-present
+  # Timeslice
+  timeHelpStr="Timestamp window to process. Positive values are used for epoch "\
+    "timestamps. A formatted date string can be used instead of timestamp "\
+    "(eg. '{}'). Zero (0) is unbounded, or all data. "\
+    "Negative values are used for relative offset in minutes (eg. "\
+    "\'--time -10 -5\' shows records from 10 minutes ago until 5 minutes ago)."
+    #TODO: format globalDateFormat with time.strftime instead of hardcode date
+  history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
+      help=timeHelpStr.format(ts_to_str(-5752444859, globalDateFormat)))
+  #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
 
   ### AUTO LOG MODE ARGS ###
   #TODO: add splunk panel/history mode
