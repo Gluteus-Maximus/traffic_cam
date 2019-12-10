@@ -276,8 +276,8 @@ def do_config(args):
     if configs:
       print("\nStored Configs")
       for config in configs.items():
-        print("  {:<10}: '{}'".format(*config))
-      print("  {:<10}: {}".format("Cronjob",
+        print("  {:<11}: '{}'".format(*config))
+      print("  {:<11}: {}".format("Cronjob",
           "Running" if Path(globalCronFilepath).exists() else "Stopped"))
     #TODO: check if cronjob running
     return 0
@@ -678,12 +678,15 @@ def display_table(historyLst, _, humanRead):
   '''
   if not historyLst:
     return 1
-  print("Timestamp.....RX Bytes.....RX Packets.....TX Bytes.....TX Packets")
+  #TODO: scrolling header
+  print("{:.<24}{:.<13}{:.<12}{:.<13}{}".format(
+      "Timestamp", "RX Bytes", "Packets", "TX Bytes", "Packets"))
   for item in historyLst:
     #TODO: fix format, use ascii lines
-    print("{} | {} | {} | {} | {}".format(
-      time.ctime(item['endTS']), item['rx_b'], item['rx_p'], item['tx_b'], item['tx_p'])
-      )
+    print("{} | {:10} | {:9} | {:10} | {:9}".format(
+        ts_to_str(item['endTS'], globalDateFormat), item['rx_b'],
+            item['rx_p'], item['tx_b'], item['tx_p'])
+        )
   return 0
 
 
