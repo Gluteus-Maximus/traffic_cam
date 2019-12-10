@@ -208,6 +208,11 @@ def rotate_file(filepath, sizeLimit):
   return totalCount
 
 
+def str_to_ts(dateStr, formatStr):
+  timeObj = time.strptime(dateStr, formatStr)
+  return time.mktime(timeObj)
+
+
 def load_config(filepath=globalProgramDir):
   '''
   @func: Loads and returns config settings.
