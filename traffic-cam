@@ -20,17 +20,18 @@ from default_subparser import set_default_subparser
 
 
 ### GLOBAL VARIABLES ###
+globalProgramCLI = 'traffic-cam'
 globalProgramDir = os.path.dirname(os.path.realpath(__file__))
-globalProgramDir = os.path.join(globalProgramDir, '.traffic-cam.conf')
+globalConfigFilepath = os.path.join(globalProgramDir, '.traffic-cam.conf')
 globalConfigDefaults = {
     'interface': None,
     'frequency': 1,
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 10  # MB size limit of netdev log file
     }
-globalErrorFilepath = '/var/log/traffic-cam.log'
+globalErrorFilepath = '/var/log/traffic-cam-error.log'
 globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
-globalDateFormat = '%Y.%m.%d.%H:%M:%S'
+globalDateFormat = '%Y-%m-%d %H:%M:%S'
 
 
 def main():
@@ -71,12 +72,12 @@ def get_args(argv=sys.argv):
       help="Program mode, default is history.", )
   # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="Configuration mode. \'./traffic_cam config -h\' for more.",
+      help="Configuration mode. '{} config -h' for more.".format(globalProgramCLI),
       description="Configuration mode. Change program configurations and " +
         "start/stop automatic logging.")
   # History Mode
   history = mode.add_parser('history',
-      help="History display mode. \'./traffic_cam history -h\' for more.",
+      help="History display mode. '{} history -h' for more.".format(globalProgramCLI),
       description="History display mode. Load stored logs and display or " +
         "save histogram.")
   # Auto Log Mode
@@ -115,17 +116,15 @@ def get_args(argv=sys.argv):
   #TODO
 
   ### HISTORY MODE ARGS ###
+  # Alternate Input Source
+  #TODO: validate filepaths
   source = history.add_mutually_exclusive_group(required=False)
-  # Load Saved History
-  source.add_argument('--load', nargs=1, type=str, metavar=('PATH'),
-      help="Load saved history data from file.")
-  #TODO: validate filepath
-  # Input Logfile(s)
-  source.add_argument('--logfiles', nargs='+', type=str, metavar=('PATH'),
-      help="Specify input netdev logfile(s).")
-  #history.add_argument('-p', '--path', '--filepath', nargs=1, type=str, help="")  # Path to netdev logfile
+  source.add_argument('--load-history', '--hist', nargs=1, type=str, metavar=('PATH'),
+      dest='history', help="Load saved history data from file.")
+  source.add_argument('--load-logs', '--logs', nargs='+', type=str, metavar=('PATH'),
+      dest='logfiles', help="Specify input netdev logfile(s).")
 
-  # History Display Options
+  # History Display Formats
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
   display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
@@ -147,6 +146,8 @@ def get_args(argv=sys.argv):
       #TODO: multiple actions, store const x2
       #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
+
+  # Display Format Modifiers
   history.add_argument('--hr', '--human', dest='human', action='store_true',
       help="Convert bytes to human readable units.#NOT IMPLEMENTED#")  # Human Readable Units
   #TODO: human readable only if -g/-l (action=<check args...store_true> ?)
@@ -154,11 +155,11 @@ def get_args(argv=sys.argv):
   # Timeslice
   timeHelpStr="Timestamp window to process. Positive values are used for epoch "\
     "timestamps. A formatted date string can be used instead of timestamp "\
-    "(eg. '{}'). Zero (0) is unbounded, or all data. "\
-    "Negative values are used for relative offset in minutes (eg. "\
-    "\'--time -10 -5\' shows records from 10 minutes ago until 5 minutes ago)."
+    "(eg. '{}'). Zero (0) is unbounded, or all data. Negative values are used "\
+    "for relative offset in minutes (eg. '--time -10 -5' shows records from "\
+    "10 minutes ago until 5 minutes ago)."
     #TODO: format globalDateFormat with time.strftime instead of hardcode date
-  history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
+  history.add_argument('--timeslice', '--time', nargs=2, type=str, metavar=('START', 'END'),
       help=timeHelpStr.format(ts_to_str(-5752444859, globalDateFormat)))
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
 
@@ -218,7 +219,7 @@ def ts_to_str(timestamp, formatStr):
   return time.strftime(formatStr, timeObj)
 
 
-def load_config(filepath=globalProgramDir):
+def load_config(filepath=globalConfigFilepath):
   '''
   @func: Loads and returns config settings.
   @return: Dictionary of settings.
@@ -226,24 +227,18 @@ def load_config(filepath=globalProgramDir):
     filepath: Relative path to program config file.
   '''
   try:
-    """
-    fp = Path(filepath)
-    if not fp.is_absolute():
-      fp = Path(globalProgramDir, filepath)
-    return json.loads(fp.read_text())
-    """
     return json.loads(absolute_posixpath(filepath).read_text())
   except FileNotFoundError as e:
     raise FileNotFoundError(
-        "CONFIG LOAD ERROR: config file missing - './traffic_cam config -h'"
+        "CONFIG LOAD ERROR: config file missing - '{} config -h'".format(globalProgramCLI)
         ) from e
   except json.decoder.JSONDecodeError as e:
     raise json.decoder.JSONDecodeError(
-        "CONFIG LOAD ERROR: bad config file - './traffic_cam config -h'",
+        "CONFIG LOAD ERROR: bad config file - '{} config -h'".format(globalProgramCLI)
         ) from e
   except PermissionError as e:
     raise PermissionError(
-        "CONFIG LOAD ERROR: permission denied - './traffic_cam config -h'",
+        "CONFIG LOAD ERROR: permission denied - '{} config -h'".format(globalProgramCLI)
         ) from e
 
 
@@ -277,7 +272,7 @@ def do_config(args):
       print("\nStored Configs")
       for config in configs.items():
         print("  {:<11}: '{}'".format(*config))
-      print("  {:<11}: {}".format("Cronjob",
+      print("  {:<11}: {}".format("cronjob",
           "Running" if Path(globalCronFilepath).exists() else "Stopped"))
     #TODO: check if cronjob running
     return 0
@@ -303,7 +298,7 @@ def do_config(args):
     validate_configs(configs)
   except Exception as e:
     raise e
-  with Path(globalProgramDir) as fp:
+  with Path(globalConfigFilepath) as fp:
     try:
       fp.write_text(json.dumps(configs))
     except PermissionError as e:
@@ -346,7 +341,7 @@ def validate_configs(configs):
   except Exception as e:
     errors.append(e)
   if errors:
-    raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
+    raise Exception(("CONFIG ERROR: '{} config -h' for help".format(globalProgramCLI) + \
         "\n  {}"*len(errors)).format(*errors))
 
 
@@ -503,14 +498,23 @@ def do_history(args):
 
   # offset timeslice for negative values
   for idx, val in enumerate(args.timeslice):
+    try:
+      args.timeslice[idx] = val = int(val)
+    except ValueError:
+      try:
+        args.timeslice[idx] = val = str_to_ts(val, globalDateFormat)
+      except ValueError:
+        raise ValueError(
+            "ERROR: bad 'time' parameter - '{} history -h' for help".format(
+              globalProgramCLI))
     if val < 0:  # negative values: back in time <val> minutes
       args.timeslice[idx] = time.time() - (-val * 60)
 
   # create historyLst
-  if args.load:
-    historyLst = load_history(args.load,
+  if args.history:  # history already parsed
+    historyLst = load_history(args.history,
         args.timeslice[0], args.timeslice[1])
-  else:
+  else:  # history needs to be parsed
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
@@ -552,7 +556,7 @@ def load_netdev(files, startTS=0, endTS=0):
               trafficLst.append(traffic)
           except (AttributeError, TypeError, KeyError,
               json.decoder.JSONDecodeError) as e:
-            print("ERROR: skipping line {}: \'{}\'".format(idx, line),
+            print("ERROR: skipping line {}: '{}'".format(idx, line),
                 file=sys.stderr)
             continue  # warn and skip bad entries
     except PermissionError as e:
