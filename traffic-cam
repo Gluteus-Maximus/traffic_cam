@@ -20,6 +20,7 @@ from default_subparser import set_default_subparser
 
 
 ### GLOBAL VARIABLES ###
+globalProgramCLI = 'traffic-cam'
 globalProgramDir = os.path.dirname(os.path.realpath(__file__))
 globalConfigFilepath = os.path.join(globalProgramDir, '.traffic-cam.conf')
 globalConfigDefaults = {
@@ -28,7 +29,7 @@ globalConfigDefaults = {
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 10  # MB size limit of netdev log file
     }
-globalErrorFilepath = '/var/log/traffic-cam.log'
+globalErrorFilepath = '/var/log/traffic-cam-error.log'
 globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
 globalDateFormat = '%Y.%m.%d.%H:%M:%S'
 
@@ -71,12 +72,12 @@ def get_args(argv=sys.argv):
       help="Program mode, default is history.", )
   # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="Configuration mode. \'./traffic_cam config -h\' for more.",
+      help="Configuration mode. \'{} config -h\' for more.".format(globalProgramCLI),
       description="Configuration mode. Change program configurations and " +
         "start/stop automatic logging.")
   # History Mode
   history = mode.add_parser('history',
-      help="History display mode. \'./traffic_cam history -h\' for more.",
+      help="History display mode. \'{} history -h\' for more.".format(globalProgramCLI),
       description="History display mode. Load stored logs and display or " +
         "save histogram.")
   # Auto Log Mode
@@ -154,9 +155,9 @@ def get_args(argv=sys.argv):
   # Timeslice
   timeHelpStr="Timestamp window to process. Positive values are used for epoch "\
     "timestamps. A formatted date string can be used instead of timestamp "\
-    "(eg. '{}'). Zero (0) is unbounded, or all data. "\
-    "Negative values are used for relative offset in minutes (eg. "\
-    "\'--time -10 -5\' shows records from 10 minutes ago until 5 minutes ago)."
+    "(eg. '{}'). Zero (0) is unbounded, or all data. Negative values are used "\
+    "for relative offset in minutes (eg. \'--time -10 -5\' shows records from "\
+    "10 minutes ago until 5 minutes ago)."
     #TODO: format globalDateFormat with time.strftime instead of hardcode date
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
       help=timeHelpStr.format(ts_to_str(-5752444859, globalDateFormat)))
@@ -226,24 +227,18 @@ def load_config(filepath=globalConfigFilepath):
     filepath: Relative path to program config file.
   '''
   try:
-    """
-    fp = Path(filepath)
-    if not fp.is_absolute():
-      fp = Path(globalProgramDir, filepath)
-    return json.loads(fp.read_text())
-    """
     return json.loads(absolute_posixpath(filepath).read_text())
   except FileNotFoundError as e:
     raise FileNotFoundError(
-        "CONFIG LOAD ERROR: config file missing - './traffic_cam config -h'"
+        "CONFIG LOAD ERROR: config file missing - '{} config -h'".format(globalProgramCLI)
         ) from e
   except json.decoder.JSONDecodeError as e:
     raise json.decoder.JSONDecodeError(
-        "CONFIG LOAD ERROR: bad config file - './traffic_cam config -h'",
+        "CONFIG LOAD ERROR: bad config file - '{} config -h'".format(globalProgramCLI)
         ) from e
   except PermissionError as e:
     raise PermissionError(
-        "CONFIG LOAD ERROR: permission denied - './traffic_cam config -h'",
+        "CONFIG LOAD ERROR: permission denied - '{} config -h'".format(globalProgramCLI)
         ) from e
 
 
@@ -277,7 +272,7 @@ def do_config(args):
       print("\nStored Configs")
       for config in configs.items():
         print("  {:<11}: '{}'".format(*config))
-      print("  {:<11}: {}".format("Cronjob",
+      print("  {:<11}: {}".format("cronjob",
           "Running" if Path(globalCronFilepath).exists() else "Stopped"))
     #TODO: check if cronjob running
     return 0
@@ -346,7 +341,7 @@ def validate_configs(configs):
   except Exception as e:
     errors.append(e)
   if errors:
-    raise Exception(("CONFIG ERROR: './traffic_cam config -h' for help" + \
+    raise Exception(("CONFIG ERROR: '{} config -h' for help".format(globalProgramCLI) + \
         "\n  {}"*len(errors)).format(*errors))
 
 
