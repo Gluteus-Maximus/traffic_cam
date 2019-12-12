@@ -18,6 +18,8 @@ from default_subparser import set_default_subparser
 #TODO: call rotate_file in all logs
 #TODO: scrolling headers (display)
 
+#TODO DBG TODO: traffic-cam -r -> 'tuple' object does not support item assignment
+
 
 ### GLOBAL VARIABLES ###
 globalProgramCLI = 'traffic-cam'
@@ -48,7 +50,7 @@ def main():
     return switch[args.mode](args)
   except Exception as e:
     print(e, file=sys.stderr)
-    #raise e
+    raise e
     return 1
 
 
@@ -494,7 +496,7 @@ def do_history(args):
   '''
   # populate null timeslice
   if args.timeslice is None:
-    args.timeslice = (0, 0)
+    args.timeslice = [0, 0]
 
   # offset timeslice for negative values
   for idx, val in enumerate(args.timeslice):
@@ -683,15 +685,22 @@ def display_table(historyLst, _, humanRead):
   if not historyLst:
     return 1
   #TODO: scrolling header
-  print("{:.<24}{:.<13}{:.<12}{:.<13}{}".format(
+  print("{:.<24}{:.<15}{:.<14}{:.<15}{}....".format(
       "Timestamp", "RX Bytes", "Packets", "TX Bytes", "Packets"))
   for item in historyLst:
     #TODO: fix format, use ascii lines
-    print("{} | {:10} | {:9} | {:10} | {:9}".format(
-        ts_to_str(item['endTS'], globalDateFormat), item['rx_b'],
-            item['rx_p'], item['tx_b'], item['tx_p'])
+    print("{} |{:>13} |{:12} |{:>13} |{:12} |".format(
+        ts_to_str(item['endTS'], globalDateFormat), str(item['rx_b'])+" B",
+            item['rx_p'], str(item['tx_b'])+" B", item['tx_p'])
         )
   return 0
+
+
+def format_human(data):
+  units = ["B", "KB", "MB", "GB", "TB"]
+  # **3*x -> idx unitLst, div **3*x
+  unit = "B"  #TODO DBG
+  return data, unit
 
 
 def display_list(historyLst, _, humanRead):
@@ -744,10 +753,8 @@ def display_average(historyLst, _, humanRead):
 
     #TODO
     if humanRead:
-      units = ["B", "KB", "MB", "GB", "TB"]
-      # **3*x -> idx unitLst, div **3*x
-      rx_unit = tx_unit = "B"  #TODO DBG
-      pass
+      rx_b, rx_unit = format_human(rx_b)
+      tx_b, tx_unit = format_human(tx_b)
     else:
       rx_unit = tx_unit = "B"
 
