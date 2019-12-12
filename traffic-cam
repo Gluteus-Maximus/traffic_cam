@@ -501,7 +501,6 @@ def do_history(args):
     try:
       args.timeslice[idx] = val = int(val)
     except ValueError:
-      print("DBG: time error")
       try:
         args.timeslice[idx] = val = str_to_ts(val, globalDateFormat)
       except ValueError:
@@ -557,10 +556,6 @@ def load_netdev(files, startTS=0, endTS=0):
               trafficLst.append(traffic)
           except (AttributeError, TypeError, KeyError,
               json.decoder.JSONDecodeError) as e:
-            print(type(startTS), type(endTS))
-            print("DBG: load net")
-            print(type(e))
-            print(e)
             print("ERROR: skipping line {}: '{}'".format(idx, line),
                 file=sys.stderr)
             continue  # warn and skip bad entries
@@ -610,7 +605,6 @@ def generate_history(trafficLst, humanRead=False):
         historyObj['tx_p'] -= prevObj['tx_p']  # Diff Transmit Packets
       historyLst.append(historyObj)
     except KeyError:  # trafficLst should be cleaned prior, should not trigger
-      print("DBG: gen hist")
       print("ERROR: skipping bad entry in dataset", file=sys.stderr)
       continue
     prevObj = traffic
@@ -645,7 +639,6 @@ def load_history(files, startTS=0, endTS=0):
               json.decoder.JSONDecodeError):
             continue  # skip bad entries
     except (PermissionError, FileNotFoundError) as e:
-      print("DBG: load hist")
       print("LOAD ERROR: skipping bad file: {}".format(e.filename),
           file=sys.stderr)
       continue
