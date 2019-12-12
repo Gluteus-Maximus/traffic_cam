@@ -18,6 +18,8 @@ from default_subparser import set_default_subparser
 #TODO: call rotate_file in all logs
 #TODO: scrolling headers (display)
 
+#TODO DBG TODO: traffic-cam -r -> 'tuple' object does not support item assignment
+
 
 ### GLOBAL VARIABLES ###
 globalProgramCLI = 'traffic-cam'
@@ -48,7 +50,7 @@ def main():
     return switch[args.mode](args)
   except Exception as e:
     print(e, file=sys.stderr)
-    #raise e
+    raise e
     return 1
 
 
