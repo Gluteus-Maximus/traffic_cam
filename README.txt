@@ -53,3 +53,6 @@ Note: install.sh can be used to update directory path after moving the
 Note: --time behavior is undefined with timestamps before epoch
     (1970-01-01) and will likely fail.  Impact of this is trivial and of
     no real-world concern.
+
+Note: Timeslice with timestames (eg. "--time '1787-09-17 13:42:59' 0"):
+    timestamps must be enclosed in quotes.
