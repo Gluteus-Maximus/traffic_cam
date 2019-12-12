@@ -701,8 +701,12 @@ def display_table(historyLst, _, humanRead):
   for item in historyLst:
     #TODO: fix format, use ascii lines
     if humanRead:
-      rx_b = "{:.02f} {}".format(*format_human(item['rx_b']))
-      tx_b = "{:.02f} {}".format(*format_human(item['tx_b']))
+      data, unit = format_human(item['rx_b'])
+      data = "{:.01f}".format(data).rstrip("0").rstrip(".")
+      rx_b = "{} {}".format(data, unit)
+      data, unit = format_human(item['rx_b'])
+      data = "{:.01f}".format(data).rstrip("0").rstrip(".")
+      tx_b = "{} {}".format(data, unit)
     else:
       rx_b = str(item['rx_b'])+" B"
       tx_b = str(item['tx_b'])+" B"
