@@ -696,6 +696,13 @@ def display_table(historyLst, _, humanRead):
   return 0
 
 
+def format_human(data):
+  units = ["B", "KB", "MB", "GB", "TB"]
+  # **3*x -> idx unitLst, div **3*x
+  unit = "B"  #TODO DBG
+  return data, unit
+
+
 def display_list(historyLst, _, humanRead):
   '''
   @func: CLI display history as a list.
@@ -746,10 +753,8 @@ def display_average(historyLst, _, humanRead):
 
     #TODO
     if humanRead:
-      units = ["B", "KB", "MB", "GB", "TB"]
-      # **3*x -> idx unitLst, div **3*x
-      rx_unit = tx_unit = "B"  #TODO DBG
-      pass
+      rx_b, rx_unit = format_human(rx_b)
+      tx_b, tx_unit = format_human(tx_b)
     else:
       rx_unit = tx_unit = "B"
 
