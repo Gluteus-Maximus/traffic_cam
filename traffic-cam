@@ -498,6 +498,16 @@ def do_history(args):
 
   # offset timeslice for negative values
   for idx, val in enumerate(args.timeslice):
+    try:
+      args.timeslice[idx] = val = int(val)
+    except ValueError:
+      print("DBG: time error")
+      try:
+        args.timeslice[idx] = val = str_to_ts(val, globalDateFormat)
+      except ValueError:
+        raise ValueError(
+            "ERROR: bad 'time' parameter - '{} history -h' for help.".format(
+              globalProgramCLI))
     if val < 0:  # negative values: back in time <val> minutes
       args.timeslice[idx] = time.time() - (-val * 60)
 
