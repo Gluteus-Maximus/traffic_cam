@@ -671,7 +671,7 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
 
 
 def format_human(data):
-  units = ["B", "KB", "MB", "GB", "TB"]
+  units = ["B ", "KB", "MB", "GB", "TB"]
   # **3*x -> idx unitLst, div **3*x
   data = float(data)
   magnitude = 0
@@ -714,7 +714,7 @@ def display_table(historyLst, _, humanRead):
       tx_b = str(item['tx_b'])+" B"
     print("{} |{:>13} |{:12} |{:>13} |{:12} |".format(
         ts_to_str(item['endTS'], globalDateFormat), rx_b,
-            item['rx_p'], tx_b, item['tx_p'])
+        item['rx_p'], tx_b, item['tx_p'])
         )
   return 0
 
@@ -760,7 +760,8 @@ def display_average(historyLst, _, humanRead):
     maxTS = max(historyLst, key=lambda x: x['endTS'])['endTS']
     print("Average Traffic: '{}' to '{}'\n".format(
         time.ctime(minTS),
-        time.ctime(maxTS)))
+        time.ctime(maxTS)
+        ))
     # Calculate and print averages
     rx_b = sum([x['rx_b'] for x in historyLst]) / (maxTS - minTS)
     rx_p = sum([x['rx_p'] for x in historyLst]) / (maxTS - minTS)
@@ -776,15 +777,17 @@ def display_average(historyLst, _, humanRead):
 
     averageStr = '''\
   Receive Data
-   {0:0.0f} {1}/s
+   {0:} {1}/s
   Receive Packets
    {2:0.2f} pkt/s
   Transmit Data
-   {3:0.0f} {4}/s
+   {3:} {4}/s
   Transmit Packets
    {5:0.2f} pkt/s'''
 
-    print(averageStr.format(*(rx_b, rx_unit), rx_p, *(tx_b, tx_unit), tx_p))
+    print(averageStr.format(*(format_float(rx_b, 1), rx_unit), rx_p,
+                            *(format_float(tx_b, 1), tx_unit), tx_p)
+                            )
     return 0
   except Exception as e:  #TODO: specify exception
     raise e
