@@ -685,13 +685,13 @@ def display_table(historyLst, _, humanRead):
   if not historyLst:
     return 1
   #TODO: scrolling header
-  print("{:.<24}{:.<13}{:.<12}{:.<13}{}".format(
+  print("{:.<24}{:.<15}{:.<14}{:.<15}{}....".format(
       "Timestamp", "RX Bytes", "Packets", "TX Bytes", "Packets"))
   for item in historyLst:
     #TODO: fix format, use ascii lines
-    print("{} | {:10} | {:9} | {:10} | {:9}".format(
-        ts_to_str(item['endTS'], globalDateFormat), item['rx_b'],
-            item['rx_p'], item['tx_b'], item['tx_p'])
+    print("{} |{:>13} |{:12} |{:>13} |{:12} |".format(
+        ts_to_str(item['endTS'], globalDateFormat), str(item['rx_b'])+" B",
+            item['rx_p'], str(item['tx_b'])+" B", item['tx_p'])
         )
   return 0
 
