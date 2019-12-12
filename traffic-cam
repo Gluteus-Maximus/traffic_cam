@@ -666,8 +666,19 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
       'average': display_average
       }
   # Call function from 'switch' according to 'mode'
+  # 'filepath' and 'humanRead' are ignored where appropriate
   return switch[outputMode](historyLst, filepath, humanRead)
-    # 'filepath' is ignored where appropriate
+
+
+def format_human(data):
+  units = ["B", "KB", "MB", "GB", "TB"]
+  # **3*x -> idx unitLst, div **3*x
+  data = float(data)
+  magnitude = 0
+  while data > 10**((magnitude + 1) * 3) and magnitude < len(units) - 1:
+    magnitude += 1
+  #print(data / 10**(magnitude * 3)) #TODO DBG
+  return data / 10**(magnitude * 3), units[magnitude]
 
 
 def display_graph(historyLst, _, humanRead):
@@ -689,22 +700,17 @@ def display_table(historyLst, _, humanRead):
       "Timestamp", "RX Bytes", "Packets", "TX Bytes", "Packets"))
   for item in historyLst:
     #TODO: fix format, use ascii lines
+    if humanRead:
+      rx_b = "{:.02f} {}".format(*format_human(item['rx_b']))
+      tx_b = "{:.02f} {}".format(*format_human(item['tx_b']))
+    else:
+      rx_b = str(item['rx_b'])+" B"
+      tx_b = str(item['tx_b'])+" B"
     print("{} |{:>13} |{:12} |{:>13} |{:12} |".format(
-        ts_to_str(item['endTS'], globalDateFormat), str(item['rx_b'])+" B",
-            item['rx_p'], str(item['tx_b'])+" B", item['tx_p'])
+        ts_to_str(item['endTS'], globalDateFormat), rx_b,
+            item['rx_p'], tx_b, item['tx_p'])
         )
   return 0
-
-
-def format_human(data):
-  units = ["B", "KB", "MB", "GB", "TB"]
-  # **3*x -> idx unitLst, div **3*x
-  data = float(data)
-  magnitude = 0
-  while data > 10**((magnitude + 1) * 3) and magnitude < len(units) - 1:
-    magnitude += 1
-  #print(data / 10**(magnitude * 3)) #TODO DBG
-  return data / 10**(magnitude * 3), units[magnitude]
 
 
 def display_list(historyLst, _, humanRead):
@@ -764,13 +770,13 @@ def display_average(historyLst, _, humanRead):
 
     averageStr = '''\
   Receive Data
-  {0:0.0f} {1}/s
+   {0:0.0f} {1}/s
   Receive Packets
-  {2:0.2f} pkt/s
+   {2:0.2f} pkt/s
   Transmit Data
-  {3:0.0f} {4}/s
+   {3:0.0f} {4}/s
   Transmit Packets
-  {5:0.2f} pkt/s'''
+   {5:0.2f} pkt/s'''
 
     print(averageStr.format(*(rx_b, rx_unit), rx_p, *(tx_b, tx_unit), tx_p))
     return 0
