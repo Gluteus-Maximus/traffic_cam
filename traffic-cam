@@ -31,7 +31,7 @@ globalConfigDefaults = {
     }
 globalErrorFilepath = '/var/log/traffic-cam-error.log'
 globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
-globalDateFormat = '%Y.%m.%d.%H:%M:%S'
+globalDateFormat = '%Y-%m-%d %H:%M:%S'
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
     return switch[args.mode](args)
   except Exception as e:
     print(e, file=sys.stderr)
-    raise e
+    #raise e
     return 1
 
 
@@ -505,16 +505,16 @@ def do_history(args):
         args.timeslice[idx] = val = str_to_ts(val, globalDateFormat)
       except ValueError:
         raise ValueError(
-            "ERROR: bad 'time' parameter - '{} history -h' for help.".format(
+            "ERROR: bad 'time' parameter - '{} history -h' for help".format(
               globalProgramCLI))
     if val < 0:  # negative values: back in time <val> minutes
       args.timeslice[idx] = time.time() - (-val * 60)
 
   # create historyLst
-  if args.history:
+  if args.history:  # history already parsed
     historyLst = load_history(args.history,
         args.timeslice[0], args.timeslice[1])
-  else:
+  else:  # history needs to be parsed
     if args.logfiles:
       trafficLst = load_netdev(args.logfiles,
           args.timeslice[0], args.timeslice[1])
