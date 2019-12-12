@@ -72,12 +72,12 @@ def get_args(argv=sys.argv):
       help="Program mode, default is history.", )
   # Config Mode
   config = mode.add_parser('config', #action='store_true',
-      help="Configuration mode. \'{} config -h\' for more.".format(globalProgramCLI),
+      help="Configuration mode. '{} config -h' for more.".format(globalProgramCLI),
       description="Configuration mode. Change program configurations and " +
         "start/stop automatic logging.")
   # History Mode
   history = mode.add_parser('history',
-      help="History display mode. \'{} history -h\' for more.".format(globalProgramCLI),
+      help="History display mode. '{} history -h' for more.".format(globalProgramCLI),
       description="History display mode. Load stored logs and display or " +
         "save histogram.")
   # Auto Log Mode
@@ -156,7 +156,7 @@ def get_args(argv=sys.argv):
   timeHelpStr="Timestamp window to process. Positive values are used for epoch "\
     "timestamps. A formatted date string can be used instead of timestamp "\
     "(eg. '{}'). Zero (0) is unbounded, or all data. Negative values are used "\
-    "for relative offset in minutes (eg. \'--time -10 -5\' shows records from "\
+    "for relative offset in minutes (eg. '--time -10 -5' shows records from "\
     "10 minutes ago until 5 minutes ago)."
     #TODO: format globalDateFormat with time.strftime instead of hardcode date
   history.add_argument('--timeslice', '--time', nargs=2, type=float, metavar=('START', 'END'),
@@ -547,7 +547,7 @@ def load_netdev(files, startTS=0, endTS=0):
               trafficLst.append(traffic)
           except (AttributeError, TypeError, KeyError,
               json.decoder.JSONDecodeError) as e:
-            print("ERROR: skipping line {}: \'{}\'".format(idx, line),
+            print("ERROR: skipping line {}: '{}'".format(idx, line),
                 file=sys.stderr)
             continue  # warn and skip bad entries
     except PermissionError as e:
