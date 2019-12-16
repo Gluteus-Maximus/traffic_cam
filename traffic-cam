@@ -30,7 +30,7 @@ globalConfigDefaults = {
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 10  # MB size limit of netdev log file
     }
-globalErrorFilepath = '/var/log/traffic-cam-error.log'
+globalErrorFilepath = '/var/log/traffic-cam.log'
 globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
 globalDateFormat = '%Y-%m-%d %H:%M:%S'
 
@@ -418,7 +418,7 @@ def create_cronjob(configs):
 
   programPath = os.path.realpath(__file__)
   errorOutput = "2>> {}".format(globalErrorFilepath)
-  #TODO: add 'date' timestamp
+  #TODO: add 'date' timestamp if output from stderr
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
       "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
