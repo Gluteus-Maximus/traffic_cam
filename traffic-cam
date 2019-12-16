@@ -612,7 +612,7 @@ def generate_history(trafficLst, humanRead=False):
   return historyLst
 
 
-def load_history(files, startTS=0, endTS=0):
+def load_history(logfiles, startTS=0, endTS=0):
   '''
   @func: Creates a history list from json history file.
   @return: List of history dict's (equiv. to historyLst)
@@ -624,7 +624,7 @@ def load_history(files, startTS=0, endTS=0):
   #TODO: deduplicate - load_netdev
   historyLst = list()
   historyKeys = set(['startTS', 'endTS', 'rx_b', 'rx_p', 'tx_b', 'tx_p'])
-  for filepath in files:
+  for filepath in logfiles:
     try:
       with Path(filepath) as fp:
         for line in [x for x in fp.read_text().split("\n") if x]:
@@ -646,7 +646,7 @@ def load_history(files, startTS=0, endTS=0):
   return sorted(historyLst, key=lambda x: x['startTS'])
 
 
-def output_history(outputMode, historyLst, filepath=None, humanRead=False):
+def output_history(outputMode, historyLst, savepath=None, humanRead=False):
   '''
   @func: Wrapper function for various output options.
   @param:
@@ -657,8 +657,12 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   '''
   if filepath:  #TODO: rename savepath
     try:
-      save_history(historyLst, filepath, humanRead)
+      save_history(historyLst, savepath, humanRead)
     except Exception as e:  #TODO
+      #if outputMode:
+        #print/input (pause)
+      #else:
+        #raise e
       raise e
       pass
   switch = {
@@ -672,7 +676,7 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
   # Call function from 'switch' according to 'mode'
   # 'filepath' and 'humanRead' are ignored where appropriate
   if outputMode:
-    return switch[outputMode](historyLst, filepath, humanRead)
+    return switch[outputMode](historyLst, savepath, humanRead)
   else:
     return 0
 
