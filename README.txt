@@ -58,3 +58,5 @@ Note: Timeslice with timestames (eg. "--time '1787-09-17 13:42:59' 0"):
     timestamps must be enclosed in quotes.
 
 Note: Include --time usage/examples
+
+Note: install/uninstall must be run by a 'sudoer' user.

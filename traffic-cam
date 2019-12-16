@@ -501,6 +501,7 @@ def do_history(args):
     args.timeslice = [0, 0]
 
   # offset timeslice for negative values
+  #TODO: interpret hours/days??
   for idx, val in enumerate(args.timeslice):
     try:
       args.timeslice[idx] = val = int(val)
