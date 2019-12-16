@@ -747,18 +747,28 @@ def display_raw(historyLst, *_):
   return 0
 
 
-def save_history(historyLst, filepath, _):
+def save_history(historyLst, filepaths, _):
   '''
   @func: Output history to a json file. Overwrites file if exists.
     Always stores raw values (byte count and epoch timestamps).
   '''
   #TODO: specify target file owner?
-  try:
-    for item in historyLst:
-      store_netdev(item, filepath)
-    return 0
-  except Exception as e:
-    raise e
+  print("Saving history data to file.")
+  for filepath in filepaths:
+    try:
+      print(historyLst)  #DBG
+      #TODO: clear file contents
+      #TODO: relative fp to pwd
+      for item in historyLst:
+        try:
+          store_netdev(item, filepath)
+        except json.decoder.JSONDecodeError as e:
+          print("SAVE ERROR: skipping bad line", file=sys.stderr)
+      #return 0
+    except Exception as e:  #TODO: specify - split save/json
+      print("SAVE ERROR: failed to save.")
+      raise e
+  print("  success")
 
 
 def display_average(historyLst, _, humanRead):
