@@ -603,7 +603,8 @@ def generate_history(trafficLst, humanRead=False):
         ('tx_b', nextObj['tx_b']),   # Transmit Bytes
         ('tx_p', nextObj['tx_p']),   # Transmit Packets
         ])
-      if (historyObj['rx_b'] - prevObj['rx_b']) >= 0:  # Skips rollover events
+      # Skip data rollover events
+      if (historyObj['rx_b'] - prevObj['rx_b']) >= 0:
         historyObj['rx_b'] -= prevObj['rx_b']  # Diff Receive Bytes
         historyObj['rx_p'] -= prevObj['rx_p']  # Diff Receive Packets
         historyObj['tx_b'] -= prevObj['tx_b']  # Diff Transmit Bytes
