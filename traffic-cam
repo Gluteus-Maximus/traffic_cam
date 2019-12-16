@@ -655,7 +655,12 @@ def output_history(outputMode, historyLst, filepath=None, humanRead=False):
     filepath: Output filepath, used by 'save' mode.
     humanRead: Bool, convert byte integer to easily read format.
   '''
-  #filepath = load_config()['default_save_filepath'] if not filepath  #TODO ??
+  if filepath:  #TODO: rename savepath
+    try:
+      save_history(historyLst, filepath, humanRead)
+    except Exception as e:  #TODO
+      raise e
+      pass
   switch = {
       'graph'  : display_graph,
       'table'  : display_table,
