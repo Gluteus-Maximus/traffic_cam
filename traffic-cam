@@ -131,9 +131,9 @@ def get_args(argv=sys.argv):
   display.add_argument('-g', '--graph', dest='outputMode',
       action='store_const', const='graph',
       help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
-  display.add_argument('-l', '--list', dest='outputMode',
-      action='store_const', const='list',
-      help="Display as a list.#NOT IMPLEMENTED#")  # List Format
+  #display.add_argument('-l', '--list', dest='outputMode',
+  #    action='store_const', const='list',
+  #    help="Display as a list.#NOT IMPLEMENTED#")  # List Format
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
       help="Display as a formatted table.")  # Table Format
@@ -305,7 +305,6 @@ def do_config(args):
       fp.write_text(json.dumps(configs))
     except PermissionError as e:
       raise e
-  #print(configs)  #TODO DBG
   try:
     if args.apply is True:
       create_cronjob(configs)
