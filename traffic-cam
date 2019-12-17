@@ -426,8 +426,8 @@ def create_cronjob(configs):
       globalProgramCLI,
       configs['interface'],
       os.path.realpath(configs['filepath']),
-      0 # history,
-      0 # history savepath
+      0, # history,
+      0, # history savepath
       )
   netdevCronStr = \
       "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
