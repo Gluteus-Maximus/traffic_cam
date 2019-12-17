@@ -133,21 +133,21 @@ def get_args(argv=sys.argv):
   # History Display Formats
   #TODO: save/display as non-exclusive group (one or more)
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
-  display.add_argument('-g', '--graph', dest='outputMode',
-      action='store_const', const='graph',
-      help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
+  #display.add_argument('-g', '--graph', dest='outputMode',
+  #    action='store_const', const='graph',
+  #    help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
   #display.add_argument('-l', '--list', dest='outputMode',
   #    action='store_const', const='list',
   #    help="Display as a list.#NOT IMPLEMENTED#")  # List Format
+  display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
+      action='store_const', const='average',
+      help="Display average values (per second).")  # Raw Data Format
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
       help="Display as a formatted table.")  # Table Format
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
       help="Display raw history data.")  # Raw Data Format
-  display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
-      action='store_const', const='average',
-      help="Display average values (per second).")  # Raw Data Format
   display.add_argument('-s', '--save', nargs=1, metavar=('PATH'),
       help="Save raw history data to file.")
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
@@ -670,7 +670,7 @@ def output_history(outputMode, historyLst, savepath=None, humanRead=False):
         #raise e
       raise e
   switch = {
-      'graph'  : display_graph,
+      #'graph'  : display_graph,
       'table'  : display_table,
       #'list'   : display_list,
       'raw'    : display_raw,
@@ -680,6 +680,10 @@ def output_history(outputMode, historyLst, savepath=None, humanRead=False):
   # 'filepath' and 'humanRead' are ignored where appropriate
   if outputMode:
     switch[outputMode](historyLst, savepath, humanRead)
+
+
+def scrolling_header():
+  pass
 
 
 def format_human(data):
@@ -705,7 +709,7 @@ def display_graph(historyLst, _, humanRead):
   '''
   @func: CLI display history as a graph.
   '''
-  print("display_graph")  #TODO DBG
+  print("display_graph - #NOT YET IMPLEMENTED")  #TODO DBG
 
 
 def display_table(historyLst, _, humanRead):
@@ -737,7 +741,7 @@ def display_list(historyLst, _, humanRead):
   '''
   @func: CLI display history as a list.
   '''
-  print("display_list")  #TODO DBG
+  print("display_list - #NOT YET IMPLEMENTED")  #TODO DBG
 
 
 def display_raw(historyLst, *_):
