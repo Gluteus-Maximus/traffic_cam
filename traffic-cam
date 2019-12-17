@@ -6,7 +6,6 @@ from pathlib import Path
 import json
 import time
 from default_subparser import set_default_subparser
-#TODO: human readable module
 
 
 #TODO: this file must be owned by root/su, executable by all if possible
@@ -31,7 +30,7 @@ globalConfigDefaults = {
     'filepath':  os.path.join(globalProgramDir, 'netdev.log'),
     'maxlogsize': 10  # MB size limit of netdev log file
     }
-globalErrorFilepath = '/var/log/traffic-cam-error.log'
+globalErrorFilepath = '/var/log/traffic-cam.log'
 globalCronFilepath = '/etc/cron.d/traffic-cam-cron'
 globalDateFormat = '%Y-%m-%d %H:%M:%S'
 
@@ -50,7 +49,9 @@ def main():
     return switch[args.mode](args)
   except Exception as e:
     print(e, file=sys.stderr)
-    raise e
+    #if args.errors:
+      #raise e
+    #raise e  #TODO DBG
     return 1
 
 
@@ -85,6 +86,9 @@ def get_args(argv=sys.argv):
   # Auto Log Mode
   # hidden from help dialogue, user shouldn't interact with this
   auto_log = mode.add_parser('auto_log', add_help=False)
+
+  # Raise Errors (for debugging)
+  #parser.add_argument('--errors', action='store_true') #TODO: how to add parser-wide arg?
 
   ### CONFIG MODE ARGS ###
   #TODO: add status check??
@@ -129,25 +133,23 @@ def get_args(argv=sys.argv):
   # History Display Formats
   #TODO: save/display as non-exclusive group (one or more)
   display = history.add_mutually_exclusive_group(required=True)  #TODO: default display mode?
-  display.add_argument('-g', '--graph', dest='outputMode',
-      action='store_const', const='graph',
-      help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
+  #display.add_argument('-g', '--graph', dest='outputMode',
+  #    action='store_const', const='graph',
+  #    help="Display as a graph.#NOT IMPLEMENTED#")  # Graph Format
   #display.add_argument('-l', '--list', dest='outputMode',
   #    action='store_const', const='list',
   #    help="Display as a list.#NOT IMPLEMENTED#")  # List Format
+  display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
+      action='store_const', const='average',
+      help="Display average values (per second).")  # Raw Data Format
   display.add_argument('-t', '--table', dest='outputMode',
       action='store_const', const='table',
       help="Display as a formatted table.")  # Table Format
   display.add_argument('-r', '--raw', dest='outputMode',
       action='store_const', const='raw',
       help="Display raw history data.")  # Raw Data Format
-  display.add_argument('-a', '--average', dest='outputMode',  #TODO: make this default
-      action='store_const', const='average',
-      help="Display average values (per second).")  # Raw Data Format
   display.add_argument('-s', '--save', nargs=1, metavar=('PATH'),
       help="Save raw history data to file.")
-      #TODO: multiple actions, store const x2
-      #dest='outputMode', action='store_const', const='save', )  # Save Raw Data
   #TODO: change to history arg, require display unless -s used, allow -s with display arg
 
   # Display Format Modifiers
@@ -183,7 +185,7 @@ def get_args(argv=sys.argv):
 def absolute_posixpath(filepath):
   '''
   @func: Get absolute posixpath object from path string.
-  @return: Absolute posixpath object.
+  @return: Absolute posixpath object (relative to program directory).
   @param:
     filepath: Relative or absolute filepath string.
   '''
@@ -416,7 +418,7 @@ def create_cronjob(configs):
 
   programPath = os.path.realpath(__file__)
   errorOutput = "2>> {}".format(globalErrorFilepath)
-  #TODO: add 'date' timestamp
+  #TODO: add 'date' timestamp if output from stderr
   # 0=dir 1=freq 2=interface 3=output filepath
   netdevCronStr = \
       "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
@@ -499,6 +501,7 @@ def do_history(args):
     args.timeslice = [0, 0]
 
   # offset timeslice for negative values
+  #TODO: interpret hours/days??
   for idx, val in enumerate(args.timeslice):
     try:
       args.timeslice[idx] = val = int(val)
@@ -600,7 +603,8 @@ def generate_history(trafficLst, humanRead=False):
         ('tx_b', nextObj['tx_b']),   # Transmit Bytes
         ('tx_p', nextObj['tx_p']),   # Transmit Packets
         ])
-      if (historyObj['rx_b'] - prevObj['rx_b']) >= 0:  # Skips rollover events
+      # Skip data rollover events
+      if (historyObj['rx_b'] - prevObj['rx_b']) >= 0:
         historyObj['rx_b'] -= prevObj['rx_b']  # Diff Receive Bytes
         historyObj['rx_p'] -= prevObj['rx_p']  # Diff Receive Packets
         historyObj['tx_b'] -= prevObj['tx_b']  # Diff Transmit Bytes
@@ -665,9 +669,8 @@ def output_history(outputMode, historyLst, savepath=None, humanRead=False):
       #else:
         #raise e
       raise e
-      pass
   switch = {
-      'graph'  : display_graph,
+      #'graph'  : display_graph,
       'table'  : display_table,
       #'list'   : display_list,
       'raw'    : display_raw,
@@ -676,9 +679,11 @@ def output_history(outputMode, historyLst, savepath=None, humanRead=False):
   # Call function from 'switch' according to 'mode'
   # 'filepath' and 'humanRead' are ignored where appropriate
   if outputMode:
-    return switch[outputMode](historyLst, savepath, humanRead)
-  else:
-    return 0
+    switch[outputMode](historyLst, savepath, humanRead)
+
+
+def scrolling_header():
+  pass
 
 
 def format_human(data):
@@ -704,8 +709,7 @@ def display_graph(historyLst, _, humanRead):
   '''
   @func: CLI display history as a graph.
   '''
-  print("display_graph")  #TODO DBG
-  return 0
+  print("display_graph - #NOT YET IMPLEMENTED")  #TODO DBG
 
 
 def display_table(historyLst, _, humanRead):
@@ -731,15 +735,13 @@ def display_table(historyLst, _, humanRead):
         ts_to_str(item['endTS'], globalDateFormat), rx_b,
         item['rx_p'], tx_b, item['tx_p'])
         )
-  return 0
 
 
 def display_list(historyLst, _, humanRead):
   '''
   @func: CLI display history as a list.
   '''
-  print("display_list")  #TODO DBG
-  return 0
+  print("display_list - #NOT YET IMPLEMENTED")  #TODO DBG
 
 
 def display_raw(historyLst, *_):
@@ -748,7 +750,6 @@ def display_raw(historyLst, *_):
   '''
   for item in historyLst:
     print(item)
-  return 0
 
 
 def save_history(historyLst, filepaths, append=False):
@@ -768,11 +769,9 @@ def save_history(historyLst, filepaths, append=False):
         try:
           store_netdev(item, filepath)
         except json.decoder.JSONDecodeError as e:
-          print("SAVE ERROR: skipping bad line", file=sys.stderr)
-      #return 0
-    except Exception as e:  #TODO: specify - split save/json
-      print("SAVE ERROR: failed to save.")
-      raise e
+          raise json.decoder.JSONDecodeError("SAVE ERROR: skipping bad line") from e
+    except PermissionError as e:
+      raise PermissionError("SAVE ERROR: {}".format(e)) from e
   print("  done")
 
 
@@ -814,7 +813,6 @@ def display_average(historyLst, _, humanRead):
     print(averageStr.format(*(format_float(rx_b, 1), rx_unit.strip()), rx_p,
                             *(format_float(tx_b, 1), tx_unit.strip()), tx_p)
                             )
-    return 0
   except Exception as e:  #TODO: specify exception
     raise e
 
@@ -830,7 +828,6 @@ def do_auto_log(args):
     traffic = parse_netdev(args.interface)
     store_netdev(traffic, args.filepath)
     rotate_file(args.filepath, load_config()['maxlogsize'] * 10**6)
-    return 0
   except Exception as e:
     raise e
 
@@ -873,9 +870,11 @@ def store_netdev(traffic, filepath):  #TODO: rename to store_dict
   try:
     with absolute_posixpath(filepath).open(mode='a') as fp:
       fp.write(json.dumps(traffic) + "\n")
-    return 0
-  except Exception as e:  #TODO: specify - split save/json
-    raise Exception("SAVE ERROR: {}".format(e))
+  #TODO: edit exception text
+  except PermissionError as e:
+    raise PermissionError("SAVE ERROR: {}".format(e))
+  except json.decoder.JSONDecodeError as e:
+    raise json.decoder.JSONDecodeError("SAVE ERROR: {}".format(e))
 
 
 if __name__ == '__main__':
