@@ -169,7 +169,7 @@ def get_args(argv=sys.argv):
   #https://stackoverflow.com/questions/21437258/how-do-i-parse-a-date-as-an-argument-with-argparse/21437360#21437360
 
   ### AUTO LOG MODE ARGS ###
-  #TODO: add splunk panel/history mode
+  #TODO: add splunk panel/history mode (include in log call)
   # All args are required
   #TODO: multiple interfaces
   auto_log.add_argument('-i', '--interface', type=str, required=True)  # Interface to log
@@ -420,6 +420,15 @@ def create_cronjob(configs):
   errorOutput = "2>> {}".format(globalErrorFilepath)
   #TODO: add 'date' timestamp if output from stderr
   # 0=dir 1=freq 2=interface 3=output filepath
+  # **** {} wait 30 {} 2>> err
+  #TODO: add auto_log history mode parameter
+  programCallStr = "{0} auto_log -i {1} -p {2} {3} {4}".format(
+      globalProgramCLI,
+      configs['interface'],
+      os.path.realpath(configs['filepath']),
+      0 # history,
+      0 # history savepath
+      )
   netdevCronStr = \
       "*/{1} * * * * root {0} auto_log -i {2} -p {3} {4}".format(
           programPath,
